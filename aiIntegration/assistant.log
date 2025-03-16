@@ -1,0 +1,97 @@
+2025-03-16 17:29:11,769 - startup - INFO - Starting School Management AI Assistant
+2025-03-16 17:29:12,647 - startup - INFO - Core dependencies found
+2025-03-16 17:29:12,654 - startup - INFO - Environment variables loaded from .env file
+2025-03-16 17:29:12,654 - startup - INFO - Starting FastAPI backend...
+2025-03-16 17:29:14,659 - startup - INFO - FastAPI backend started on http://localhost:8000
+2025-03-16 17:29:14,659 - startup - INFO - Starting Streamlit UI...
+2025-03-16 17:29:15,440 - startup - INFO - [UI]   You can now view your Streamlit app in your browser.
+2025-03-16 17:29:15,440 - startup - INFO - [UI]   URL: http://localhost:8501
+2025-03-16 17:29:16,665 - startup - INFO - Streamlit UI started at http://127.0.0.1:8501
+2025-03-16 17:29:16,665 - startup - INFO - ==============================================
+2025-03-16 17:29:16,665 - startup - INFO - All services started successfully!
+2025-03-16 17:29:16,665 - startup - INFO - FastAPI backend: http://localhost:8000
+2025-03-16 17:29:16,666 - startup - INFO - API Documentation: http://localhost:8000/docs
+2025-03-16 17:29:16,666 - startup - INFO - Streamlit UI: http://127.0.0.1:8501
+2025-03-16 17:29:16,666 - startup - INFO - ==============================================
+2025-03-16 17:29:16,666 - startup - INFO - Press Ctrl+C to stop all services
+2025-03-16 17:29:41,992 - startup - INFO - Shutdown signal received. Stopping processes...
+2025-03-16 17:29:41,993 - startup - INFO - Stopping backend process...
+2025-03-16 17:29:41,996 - startup - INFO - backend process stopped
+2025-03-16 17:29:41,997 - startup - INFO - Stopping ui process...
+2025-03-16 17:29:42,005 - startup - INFO - ui process stopped
+2025-03-16 17:29:42,005 - startup - INFO - [UI] Process exited with code 1
+2025-03-16 17:29:42,005 - startup - INFO - All processes stopped. Exiting.
+2025-03-16 17:30:11,414 - startup - INFO - Starting School Management AI Assistant
+2025-03-16 17:30:12,248 - startup - INFO - Core dependencies found
+2025-03-16 17:30:12,254 - startup - INFO - Environment variables loaded from .env file
+2025-03-16 17:30:12,254 - startup - INFO - Starting FastAPI backend...
+2025-03-16 17:30:14,258 - startup - INFO - FastAPI backend started on http://localhost:8000
+2025-03-16 17:30:14,259 - startup - INFO - Starting Streamlit UI...
+2025-03-16 17:30:15,021 - startup - INFO - [UI]   You can now view your Streamlit app in your browser.
+2025-03-16 17:30:15,021 - startup - INFO - [UI]   URL: http://localhost:8501
+2025-03-16 17:30:16,266 - startup - INFO - Streamlit UI started at http://127.0.0.1:8501
+2025-03-16 17:30:16,266 - startup - INFO - ==============================================
+2025-03-16 17:30:16,266 - startup - INFO - All services started successfully!
+2025-03-16 17:30:16,267 - startup - INFO - FastAPI backend: http://localhost:8000
+2025-03-16 17:30:16,267 - startup - INFO - API Documentation: http://localhost:8000/docs
+2025-03-16 17:30:16,267 - startup - INFO - Streamlit UI: http://127.0.0.1:8501
+2025-03-16 17:30:16,267 - startup - INFO - ==============================================
+2025-03-16 17:30:16,267 - startup - INFO - Press Ctrl+C to stop all services
+2025-03-16 17:31:22,178 - startup - INFO - Shutdown signal received. Stopping processes...
+2025-03-16 17:31:22,178 - startup - INFO - Stopping backend process...
+2025-03-16 17:31:22,179 - startup - ERROR - [BACKEND] INFO:     Will watch for changes in these directories: ['C:\\Users\\i\\Documents\\dev\\PFE-Gestion-Scolaire\\ai-and-automation\\aiIntegration']
+2025-03-16 17:31:22,180 - startup - ERROR - [BACKEND] INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-03-16 17:31:22,180 - startup - ERROR - [BACKEND] INFO:     Started reloader process [396] using StatReload
+2025-03-16 17:31:22,180 - startup - ERROR - [BACKEND] Process SpawnProcess-1:
+2025-03-16 17:31:22,180 - startup - ERROR - [BACKEND] Traceback (most recent call last):
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\multiprocessing\process.py", line 313, in _bootstrap
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]     self.run()
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]     ~~~~~~~~^^
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\multiprocessing\process.py", line 108, in run
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]     self._target(*self._args, **self._kwargs)
+2025-03-16 17:31:22,181 - startup - ERROR - [BACKEND]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-03-16 17:31:22,182 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\_subprocess.py", line 80, in subprocess_started
+2025-03-16 17:31:22,182 - startup - INFO - backend process stopped
+2025-03-16 17:31:22,182 - startup - ERROR - [BACKEND]     target(sockets=sockets)
+2025-03-16 17:31:22,182 - startup - INFO - Stopping ui process...
+2025-03-16 17:31:22,182 - startup - ERROR - [BACKEND]     ~~~~~~^^^^^^^^^^^^^^^^^
+2025-03-16 17:31:22,182 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\server.py", line 66, in run
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]     return asyncio.run(self.serve(sockets=sockets))
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]            ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]     return runner.run(main)
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]            ~~~~~~~~~~^^^^^^
+2025-03-16 17:31:22,183 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]     return self._loop.run_until_complete(task)
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]     return future.result()
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]            ~~~~~~~~~~~~~^^
+2025-03-16 17:31:22,184 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\server.py", line 70, in serve
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]     await self._serve(sockets)
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\server.py", line 77, in _serve
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]     config.load()
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]     ~~~~~~~~~~~^^
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\config.py", line 435, in load
+2025-03-16 17:31:22,185 - startup - ERROR - [BACKEND]     self.loaded_app = import_from_string(self.app)
+2025-03-16 17:31:22,186 - startup - ERROR - [BACKEND]                       ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+2025-03-16 17:31:22,186 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\importer.py", line 22, in import_from_string
+2025-03-16 17:31:22,186 - startup - ERROR - [BACKEND]     raise exc from None
+2025-03-16 17:31:22,186 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\importer.py", line 19, in import_from_string
+2025-03-16 17:31:22,186 - startup - ERROR - [BACKEND]     module = importlib.import_module(module_str)
+2025-03-16 17:31:22,187 - startup - ERROR - [BACKEND]   File "C:\Users\i\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py", line 88, in import_module
+2025-03-16 17:31:22,187 - startup - ERROR - [BACKEND]     return _bootstrap._gcd_import(name[level:], package, level)
+2025-03-16 17:31:22,187 - startup - ERROR - [BACKEND]            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-03-16 17:31:22,187 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2025-03-16 17:31:22,187 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2025-03-16 17:31:22,188 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2025-03-16 17:31:22,188 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2025-03-16 17:31:22,188 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+2025-03-16 17:31:22,188 - startup - ERROR - [BACKEND]   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2025-03-16 17:31:22,189 - startup - ERROR - [BACKEND]   File "C:\Users\i\Documents\dev\PFE-Gestion-Scolaire\ai-and-automation\aiIntegration\main.py", line 24, in <module>
+2025-03-16 17:31:22,189 - startup - ERROR - [BACKEND]     from models import Message, ChatRequest, ModelInfo
+2025-03-16 17:31:22,189 - startup - ERROR - [BACKEND] ModuleNotFoundError: No module named 'models'
+2025-03-16 17:31:22,189 - startup - INFO - [BACKEND] Process exited with code 1
+2025-03-16 17:31:22,205 - startup - INFO - ui process stopped
+2025-03-16 17:31:22,205 - startup - INFO - [UI] Process exited with code 1
+2025-03-16 17:31:22,205 - startup - INFO - All processes stopped. Exiting.

@@ -1,0 +1,28 @@
+{
+  "documents": {
+    "1742144689_school_management_QA.pdf": {
+      "filename": "school_management_QA.pdf",
+      "timestamp": 1742144689,
+      "chunks_file": "uploads\\chunks\\1742144689_school_management_QA.pdf.json",
+      "chunk_count": 2
+    },
+    "1742147172_school_management_QA_extended.pdf": {
+      "filename": "school_management_QA_extended.pdf",
+      "timestamp": 1742147172,
+      "chunks_file": "uploads\\chunks\\1742147172_school_management_QA_extended.pdf.json",
+      "chunk_count": 5
+    },
+    "1742147213_school_management_QA.csv": {
+      "filename": "school_management_QA.csv",
+      "timestamp": 1742147213,
+      "chunks_file": "uploads\\chunks\\1742147213_school_management_QA.csv.json",
+      "chunk_count": 4
+    },
+    "1742147743_school_management_QA.csv": {
+      "filename": "school_management_QA.csv",
+      "timestamp": 1742147743,
+      "chunks_file": "uploads\\chunks\\1742147743_school_management_QA.csv.json",
+      "chunk_count": 4
+    }
+  }
+}
