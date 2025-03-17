@@ -13,6 +13,7 @@ export interface Document {
     updated_at?: string;
     dataset_id?: string;
     tag_ids?: string[];
+    chunk_count?: number;
   };
 }
 
@@ -50,6 +51,10 @@ export const fetchDocuments = async (
   tagIds?: string[]
 ): Promise<Document[]> => {
   try {
+    // If no specific filters, include uploads
+    const includeUploads = !query && !datasetId && (!tagIds || tagIds.length === 0);
+    
+    // Get regular documents from the API
     let url = `${API_BASE_URL}/api/documents`;
     const params: Record<string, string | string[]> = {};
     
@@ -66,7 +71,26 @@ export const fetchDocuments = async (
     }
     
     const response = await axios.get(url, { params });
-    return response.data;
+    let documents = response.data;
+    
+    // If we should include uploads and we have a separate uploads endpoint
+    if (includeUploads) {
+      try {
+        const uploadsDocuments = await fetchUploadsDocuments();
+        // Combine documents, avoiding duplicates
+        const existingIds = new Set(documents.map((doc: Document) => doc.id));
+        for (const uploadDoc of uploadsDocuments) {
+          if (!existingIds.has(uploadDoc.id)) {
+            documents.push(uploadDoc);
+          }
+        }
+      } catch (uploadError) {
+        console.error('Error fetching uploads documents:', uploadError);
+        // Continue with the documents we already have
+      }
+    }
+    
+    return documents;
   } catch (error) {
     console.error('Error fetching documents:', error);
     throw error;
@@ -190,5 +214,63 @@ export const deleteTag = async (id: string): Promise<void> => {
   } catch (error) {
     console.error(`Error deleting tag ${id}:`, error);
     throw error;
+  }
+};
+
+export const fetchUploadsDocuments = async (): Promise<Document[]> => {
+  try {
+    // Using the trailing slash for API consistency
+    const response = await axios.get(`${API_BASE_URL}/api/documents/uploads/`);
+    
+    // Convert the response data to Document objects
+    const documents: Document[] = [];
+    if (response.data && response.data.documents) {
+      for (const [id, doc] of Object.entries(response.data.documents)) {
+        const docData = doc as any;
+        // Create document object consistent with DocumentsPage structure
+        documents.push({
+          id: id,
+          name: docData.filename || 'Unknown Document',
+          content: '', // Content will be fetched separately when needed
+          metadata: {
+            source: 'upload',
+            type: getDocumentTypeFromFilename(docData.filename),
+            size: docData.size || 0,
+            created_at: new Date(docData.timestamp * 1000).toISOString(),
+            chunk_count: docData.chunk_count || 0
+          }
+        });
+      }
+    }
+    
+    return documents;
+  } catch (error) {
+    console.error('Error fetching uploads documents:', error);
+    // In case of 404, return empty array instead of throwing
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.log('Uploads endpoint not found, returning empty document list');
+      return [];
+    }
+    throw error;
+  }
+};
+
+const getDocumentTypeFromFilename = (filename: string): string => {
+  if (!filename) return 'unknown';
+  
+  const extension = filename.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'pdf':
+      return 'pdf';
+    case 'docx':
+    case 'doc':
+      return 'word';
+    case 'txt':
+      return 'text';
+    case 'csv':
+      return 'csv';
+    default:
+      return extension || 'unknown';
   }
 }; 

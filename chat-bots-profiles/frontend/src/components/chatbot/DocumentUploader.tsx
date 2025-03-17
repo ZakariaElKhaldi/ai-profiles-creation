@@ -44,7 +44,7 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   const loadDatasets = async () => {
     try {
       const datasets = await fetchDatasets();
-      setDatasets(datasets);
+      setDatasets(Array.isArray(datasets) ? datasets : []);
     } catch (error) {
       console.error('Error loading datasets:', error);
     }
@@ -53,7 +53,7 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   const loadTags = async () => {
     try {
       const tags = await fetchTags();
-      setTags(tags);
+      setTags(Array.isArray(tags) ? tags : []);
     } catch (error) {
       console.error('Error loading tags:', error);
     }
@@ -93,6 +93,11 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   };
 
   const toggleTag = (tagId: string) => {
+    if (!Array.isArray(selectedTagIds)) {
+      setSelectedTagIds([tagId]);
+      return;
+    }
+    
     if (selectedTagIds.includes(tagId)) {
       setSelectedTagIds(selectedTagIds.filter(id => id !== tagId));
     } else {
@@ -121,7 +126,7 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       const response = await uploadDocument(
         file, 
         selectedDatasetId || undefined, 
-        selectedTagIds.length > 0 ? selectedTagIds : undefined
+        Array.isArray(selectedTagIds) && selectedTagIds.length > 0 ? selectedTagIds : undefined
       );
       
       // Complete progress
@@ -158,7 +163,7 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
             className="w-full px-4 py-2 bg-zinc-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">No Dataset</option>
-            {datasets.map(dataset => (
+            {Array.isArray(datasets) && datasets.map(dataset => (
               <option key={dataset.id} value={dataset.id}>
                 {dataset.name}
               </option>
@@ -168,7 +173,7 @@ const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       </div>
 
       {/* Tag Selection */}
-      {tags.length > 0 && (
+      {Array.isArray(tags) && tags.length > 0 && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-zinc-300 mb-1">
             Tags (Optional)

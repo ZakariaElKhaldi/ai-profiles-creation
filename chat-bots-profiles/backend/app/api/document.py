@@ -6,6 +6,7 @@ import os
 import io
 import shutil
 import logging
+import json
 
 from app.schemas.document import (
     DocumentInfo, 
@@ -753,4 +754,36 @@ async def delete_tag(tag_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Tag not found")
     
-    return success 
+    return success
+
+
+@router.get("/uploads/", response_model=Dict[str, Any])
+async def get_uploads_documents():
+    """
+    Get documents from the uploads directory
+    
+    Returns:
+        Dictionary of document information
+    """
+    try:
+        # Path to uploads index file
+        uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+        index_file = os.path.join(uploads_dir, "index.json")
+        
+        # Log the path for debugging
+        logger.info(f"Looking for uploads index at: {index_file}")
+        
+        # Check if the file exists
+        if not os.path.exists(index_file):
+            logger.warning(f"Uploads index file not found at: {index_file}")
+            return {"documents": {}}
+        
+        # Read the index file
+        with open(index_file, 'r') as f:
+            uploads_index = json.load(f)
+            logger.info(f"Found {len(uploads_index.get('documents', {}))} documents in uploads index")
+        
+        return uploads_index
+    except Exception as e:
+        logger.error(f"Error getting uploads documents: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting uploads documents: {str(e)}") 
