@@ -1,0 +1,66 @@
+{
+  "tags": {},
+  "documents": {
+    "doc_1_20250317012257": {
+      "id": "doc_1_20250317012257",
+      "title": "school_management_QA_extended.pdf",
+      "content": "Binary file content (3766 bytes)",
+      "dataset_id": null,
+      "dataset_name": null,
+      "tag_ids": [],
+      "metadata": {
+        "author": null,
+        "created_date": null,
+        "modified_date": null,
+        "page_count": null,
+        "source": null,
+        "language": null
+      },
+      "is_favorite": false,
+      "embedding_status": "completed",
+      "created_at": "2025-03-17T01:22:57.503220",
+      "updated_at": "2025-03-17T01:33:04.869318"
+    },
+    "doc_2_20250317014958": {
+      "id": "doc_2_20250317014958",
+      "title": "school_management_QA.pdf",
+      "content": "Binary file content (2459 bytes)",
+      "dataset_id": null,
+      "dataset_name": null,
+      "tag_ids": [],
+      "metadata": {
+        "author": null,
+        "created_date": null,
+        "modified_date": null,
+        "page_count": null,
+        "source": null,
+        "language": null
+      },
+      "is_favorite": false,
+      "embedding_status": "completed",
+      "created_at": "2025-03-17T01:49:58.117320",
+      "updated_at": null
+    },
+    "doc_4_20250317020237": {
+      "id": "doc_4_20250317020237",
+      "title": "school_management_QA.csv",
+      "content": "Error extracting text from CSV: \"DocumentMetadata\" object has no field \"description\". The file may be corrupted or in an unsupported format.",
+      "dataset_id": null,
+      "dataset_name": null,
+      "tag_ids": [],
+      "metadata": {
+        "author": null,
+        "created_date": null,
+        "modified_date": null,
+        "page_count": null,
+        "source": null,
+        "language": null
+      },
+      "is_favorite": false,
+      "embedding_status": "completed",
+      "created_at": "2025-03-17T02:02:37.090615",
+      "updated_at": null
+    }
+  },
+  "datasets": {}
+}
