@@ -71,7 +71,10 @@ export const fetchDocuments = async (
     }
     
     const response = await axios.get(url, { params });
-    let documents = response.data;
+    
+    // Handle the API response structure which returns {documents: Array, total: number}
+    const documents = response.data.documents || [];
+    console.log(`Received ${documents.length} documents from API`);
     
     // If we should include uploads and we have a separate uploads endpoint
     if (includeUploads) {

@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../config';
 import { fetchDocuments, Document, fetchDocument, fetchUploadsDocuments } from '../services/documentService';
 import DocumentSelector from '../components/chatbot/DocumentSelector';
 import { useApp } from '../context/AppContext';
+import apiClient from '../services/api';
 
 interface Profile {
   id: string;
@@ -65,7 +66,6 @@ const ProfilesPage: React.FC = () => {
     temperature: 0.7,
     max_tokens: 2048,
     system_prompt: '',
-    module_id: '',
   });
   const [apiKeys, setApiKeys] = useState<Record<string, ApiKey[]>>({});
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
@@ -91,11 +91,33 @@ const ProfilesPage: React.FC = () => {
       for (const profile of profiles) {
         if (profile.document_ids && profile.document_ids.length > 0) {
           try {
-            // Try to get all documents from any available source
-            const allDocs = await loadAllDocuments();
+            // Try to get all documents from any available source using the improved fetchDocuments
+            const allDocs = await fetchDocuments();
+            console.log(`Fetched ${allDocs.length} base documents for profile ${profile.name}`);
+            
+            // Also get uploads documents to ensure we have everything
+            let uploadedDocs: Document[] = [];
+            try {
+              uploadedDocs = await fetchUploadsDocuments();
+              console.log(`Fetched ${uploadedDocs.length} uploaded documents for profile ${profile.name}`);
+            } catch (uploadErr) {
+              console.error("Error fetching uploaded documents:", uploadErr);
+            }
+            
+            // Combine all document sources
+            const combinedDocs = [...allDocs];
+            const existingIds = new Set(allDocs.map(d => d.id));
+            
+            // Add uploads without duplicates
+            for (const doc of uploadedDocs) {
+              if (!existingIds.has(doc.id)) {
+                combinedDocs.push(doc);
+                existingIds.add(doc.id);
+              }
+            }
             
             // Filter documents that belong to this profile
-            const profileDocs = allDocs.filter(doc => 
+            const profileDocs = combinedDocs.filter(doc => 
               profile.document_ids.includes(doc.id)
             );
             
@@ -105,7 +127,7 @@ const ProfilesPage: React.FC = () => {
             );
             
             if (missingIds.length > 0) {
-              console.log(`Fetching ${missingIds.length} additional documents individually`);
+              console.log(`Fetching ${missingIds.length} additional documents individually for profile ${profile.name}`);
               const additionalDocs = await Promise.all(
                 missingIds.map(async (id) => {
                   try {
@@ -128,7 +150,7 @@ const ProfilesPage: React.FC = () => {
               documentsMap[profile.id] = profileDocs;
             }
             
-            console.log(`Loaded ${documentsMap[profile.id].length} documents for profile ${profile.id}`);
+            console.log(`Loaded ${documentsMap[profile.id].length} documents for profile ${profile.name}`);
           } catch (err) {
             console.error(`Error loading documents for profile ${profile.id}:`, err);
             documentsMap[profile.id] = [];
@@ -202,11 +224,6 @@ const ProfilesPage: React.FC = () => {
         document_ids: []
       };
       
-      // Only add module_id if it's not empty
-      if (newProfile.module_id) {
-        profileData.module_id = newProfile.module_id;
-      }
-      
       const response = await axios.post(`${API_BASE_URL}/api/profiles`, profileData);
       
       setProfiles([...profiles, response.data]);
@@ -218,7 +235,6 @@ const ProfilesPage: React.FC = () => {
         temperature: 0.7,
         max_tokens: 2048,
         system_prompt: '',
-        module_id: '',
       });
     } catch (err) {
       setError('Failed to create profile');
@@ -316,17 +332,19 @@ const ProfilesPage: React.FC = () => {
     return date.toLocaleString();
   };
 
-  // Update the loadAllDocuments function
+  // Update the loadAllDocuments function to match DocumentsPage approach
   const loadAllDocuments = async () => {
     setLoading(true);
     try {
-      // Collect documents from multiple sources
+      // Array to collect all documents
       let allDocs: Document[] = [];
       const existingIds = new Set<string>();
       
       try {
-        // 1. First try the standard documents API
-        const apiDocs = await fetchDocuments();
+        // 1. First try the standard documents API - using same approach as DocumentsPage
+        const response = await apiClient.get('/documents');
+        const apiDocs = response.data.documents || [];
+        
         for (const doc of apiDocs) {
           if (!existingIds.has(doc.id)) {
             allDocs.push(doc);
@@ -340,16 +358,39 @@ const ProfilesPage: React.FC = () => {
       
       try {
         // 2. Then try the uploads-specific endpoint
-        const uploadDocs = await fetchUploadsDocuments();
-        let uploadCount = 0;
-        for (const doc of uploadDocs) {
-          if (!existingIds.has(doc.id)) {
-            allDocs.push(doc);
-            existingIds.add(doc.id);
-            uploadCount++;
+        const response = await apiClient.get('/documents/uploads/');
+        const uploadData = response.data;
+        
+        if (uploadData && uploadData.documents) {
+          // Convert the uploads data format to Document objects
+          const uploadsDocs = Object.entries(uploadData.documents).map(([id, docData]: [string, any]) => {
+            const filename = docData.filename || id;
+            const fileExt = filename.includes('.') ? filename.split('.').pop()?.toLowerCase() : 'unknown';
+            
+            return {
+              id,
+              name: filename,
+              content: '', // Content will be loaded on demand
+              metadata: {
+                source: 'upload',
+                type: fileExt,
+                size: docData.size || 0,
+                created_at: docData.timestamp ? new Date(docData.timestamp * 1000).toISOString() : new Date().toISOString(),
+                chunk_count: docData.chunk_count || 0
+              }
+            };
+          });
+          
+          let uploadCount = 0;
+          for (const doc of uploadsDocs) {
+            if (!existingIds.has(doc.id)) {
+              allDocs.push(doc);
+              existingIds.add(doc.id);
+              uploadCount++;
+            }
           }
+          console.log(`Added ${uploadCount} uploaded documents`);
         }
-        console.log(`Added ${uploadCount} uploaded documents`);
       } catch (err) {
         console.error('Error loading uploaded documents:', err);
       }
@@ -364,6 +405,12 @@ const ProfilesPage: React.FC = () => {
   };
 
   const handleOpenDocumentBrowser = (profileId: string) => {
+    // Force a refresh of all documents before showing the selector
+    loadAllDocuments().then(documents => {
+      console.log(`Loaded ${documents.length} documents for document browser`);
+      // Store these documents in state if needed for reference
+    });
+    
     setShowDocumentBrowser(profileId);
   };
 
@@ -372,6 +419,11 @@ const ProfilesPage: React.FC = () => {
   };
 
   const handleOpenModuleDocumentSelector = (profileId: string, module: Module) => {
+    // Force a refresh of all documents before showing the selector
+    loadAllDocuments().then(documents => {
+      console.log(`Loaded ${documents.length} documents for module document selector`);
+    });
+    
     setShowModuleDocumentSelector(profileId);
     setCurrentModule(module);
   };
@@ -403,28 +455,44 @@ const ProfilesPage: React.FC = () => {
 
   // Handle adding documents to a profile
   const handleAddDocumentToProfile = (profileId: string, document: Document) => {
+    console.log(`Adding document ${document.id} (${document.name}) to profile ${profileId}`);
     const profile = profiles.find(p => p.id === profileId);
     if (profile) {
-      const updatedProfile = {
-        ...profile,
-        document_ids: [...(profile.document_ids || []), document.id]
-      };
-      updateProfile(updatedProfile);
+      // Make sure we don't add duplicates
+      if (!profile.document_ids.includes(document.id)) {
+        const updatedProfile = {
+          ...profile,
+          document_ids: [...(profile.document_ids || []), document.id]
+        };
+        updateProfile(updatedProfile);
+      } else {
+        console.log(`Document ${document.id} already in profile ${profileId}`);
+      }
       handleCloseDocumentBrowser();
     }
   };
 
   const handleAddDocumentsToProfile = (profileId: string, documents: Document[]) => {
+    console.log(`Adding ${documents.length} documents to profile ${profileId}`);
     const profile = profiles.find(p => p.id === profileId);
     if (profile) {
-      const updatedProfile = {
-        ...profile,
-        document_ids: [
-          ...(profile.document_ids || []),
-          ...documents.map(doc => doc.id)
-        ]
-      };
-      updateProfile(updatedProfile);
+      // Filter out documents that are already in the profile
+      const newDocIds = documents
+        .filter(doc => !profile.document_ids.includes(doc.id))
+        .map(doc => doc.id);
+      
+      if (newDocIds.length > 0) {
+        const updatedProfile = {
+          ...profile,
+          document_ids: [
+            ...(profile.document_ids || []),
+            ...newDocIds
+          ]
+        };
+        updateProfile(updatedProfile);
+      } else {
+        console.log('No new documents to add to profile');
+      }
       handleCloseDocumentBrowser();
     }
   };
@@ -529,22 +597,6 @@ const ProfilesPage: React.FC = () => {
             </div>
             
             <div className="mb-4">
-              <label className="block text-zinc-300 mb-1">OpenRouter Model</label>
-              <select
-                value={newProfile.module_id || ''}
-                onChange={(e) => setNewProfile({ ...newProfile, module_id: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a model</option>
-                {Array.isArray(availableModules) && availableModules.map(module => (
-                  <option key={module.id} value={module.id}>
-                    {module.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
               <label className="block text-zinc-300 mb-1">Description</label>
               <textarea
                 value={newProfile.description}
@@ -640,16 +692,13 @@ const ProfilesPage: React.FC = () => {
 
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-zinc-400 text-sm">Model: <span className="text-white">{profile.model}</span></p>
+                    <p className="text-zinc-400 text-sm">
+                      Model: <span className="text-white">
+                        {availableModels[profile.model]?.name || profile.model}
+                      </span>
+                    </p>
                     <p className="text-zinc-400 text-sm">Temperature: <span className="text-white">{profile.temperature}</span></p>
                     <p className="text-zinc-400 text-sm">Max Tokens: <span className="text-white">{profile.max_tokens || 'Default'}</span></p>
-                    {profile.module_id && (
-                      <p className="text-zinc-400 text-sm">
-                        OpenRouter Model: <span className="text-white">
-                          {availableModels[profile.module_id]?.name || profile.module_id}
-                        </span>
-                      </p>
-                    )}
                   </div>
                   <div>
                     <p className="text-zinc-400 text-sm">Created: <span className="text-white">{formatDate(profile.created_at)}</span></p>
@@ -973,6 +1022,7 @@ const ProfilesPage: React.FC = () => {
           onDocumentsSelected={(documents) => handleAddDocumentsToProfile(showDocumentBrowser, documents)}
           profileId={showDocumentBrowser}
           selectionMode="multiple"
+          maxSelections={20}
         />
       )}
       
@@ -993,6 +1043,7 @@ const ProfilesPage: React.FC = () => {
           selectedDocumentIds={currentModule.document_ids}
           profileId={showModuleDocumentSelector}
           selectionMode="multiple"
+          maxSelections={50}
         />
       )}
     </div>
