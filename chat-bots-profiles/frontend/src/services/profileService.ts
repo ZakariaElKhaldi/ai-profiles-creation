@@ -1,6 +1,19 @@
 import apiClient from './api';
 
 // Types
+export interface ProfileSettings {
+  document_limit?: number;
+  token_limit?: number;
+  response_time_limit?: number;
+}
+
+export interface ProfileUsageStats {
+  document_count?: number;
+  last_document_update?: string;
+  token_usage?: number;
+  avg_response_time?: number;
+}
+
 export interface ChatbotProfile {
   id: string;
   name: string;
@@ -10,13 +23,24 @@ export interface ChatbotProfile {
   created_at: string;
   updated_at?: string;
   training_data_count?: number;
+  document_ids: string[];
+  settings: ProfileSettings;
+  usage_stats: ProfileUsageStats;
+  personality_traits: string[];
+  example_messages: string[];
+  avatar_url?: string;
 }
 
 export interface CreateProfileRequest {
   name: string;
-  description: string;
+  personality_traits: string[];
+  description?: string;
   model: string;
   temperature: number;
+  example_messages?: string[];
+  avatar_url?: string;
+  settings?: ProfileSettings;
+  document_ids?: string[];
 }
 
 export interface ApiKeyResponse {
@@ -31,6 +55,12 @@ export interface TrainingDataResponse {
   uploaded_at: string;
   size: number;
   status: 'processing' | 'processed' | 'failed';
+}
+
+export interface ProfileDocumentResponse {
+  profile_id: string;
+  document_ids: string[];
+  message: string;
 }
 
 // API functions
@@ -94,5 +124,20 @@ export const deleteTrainingData = async (profileId: string, dataId: string): Pro
 // Test chatbot
 export const testChatbot = async (profileId: string, message: string): Promise<{ response: string }> => {
   const response = await apiClient.post(`/profiles/${profileId}/test`, { message });
+  return response.data;
+};
+
+export const addDocumentsToProfile = async (profileId: string, documentIds: string[]): Promise<ProfileDocumentResponse> => {
+  const response = await apiClient.post(`/profiles/${profileId}/documents`, { document_ids: documentIds });
+  return response.data;
+};
+
+export const getProfileDocuments = async (profileId: string): Promise<ProfileDocumentResponse> => {
+  const response = await apiClient.get(`/profiles/${profileId}/documents`);
+  return response.data;
+};
+
+export const removeDocumentFromProfile = async (profileId: string, documentId: string): Promise<ProfileDocumentResponse> => {
+  const response = await apiClient.delete(`/profiles/${profileId}/documents/${documentId}`);
   return response.data;
 }; 

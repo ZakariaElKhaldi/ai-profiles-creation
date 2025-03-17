@@ -6,7 +6,31 @@ for different document types.
 import os
 import re
 import io
-import fitz  # PyMuPDF
+import logging
+import sys
+from pathlib import Path
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Add site-packages to path
+python_path = Path(sys.executable).parent
+site_packages = python_path / "Lib" / "site-packages"
+if site_packages.exists():
+    sys.path.append(str(site_packages))
+
+try:
+    import fitz  # PyMuPDF
+except ImportError as e:
+    logger.error(f"Error importing PyMuPDF: {e}")
+    logger.info("Trying alternative import path...")
+    try:
+        from pymupdf import fitz
+    except ImportError as e:
+        logger.error(f"Failed to import PyMuPDF using alternative path: {e}")
+        fitz = None
+
 import docx
 import csv
 import pandas as pd
@@ -24,12 +48,21 @@ class DocumentProcessor:
         """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        
+        # Check if PDF processing is available
+        self.pdf_available = fitz is not None
+        
         self.supported_formats = {
-            'pdf': self._process_pdf,
             'txt': self._process_txt,
             'docx': self._process_docx,
             'csv': self._process_csv
         }
+        
+        # Only add PDF support if available
+        if self.pdf_available:
+            self.supported_formats['pdf'] = self._process_pdf
+        
+        logger.info(f"Initialized DocumentProcessor with supported formats: {list(self.supported_formats.keys())}")
     
     def process_document(self, file_content: bytes, filename: str) -> List[str]:
         """Process a document and extract text chunks
@@ -44,6 +77,8 @@ class DocumentProcessor:
         file_ext = filename.split('.')[-1].lower()
         
         if file_ext not in self.supported_formats:
+            if file_ext == 'pdf' and not self.pdf_available:
+                raise ValueError("PDF processing is not available. PyMuPDF (fitz) failed to load.")
             raise ValueError(f"Unsupported file format: {file_ext}")
         
         # Call the appropriate processing function based on file extension
@@ -61,6 +96,10 @@ class DocumentProcessor:
         Returns:
             Extracted text as a string
         """
+        if not self.pdf_available:
+            logger.error("PDF processing attempted but PyMuPDF is not available")
+            return ""
+            
         text = ""
         
         try:
@@ -69,7 +108,7 @@ class DocumentProcessor:
                 for page in doc:
                     text += page.get_text()
         except Exception as e:
-            print(f"Error processing PDF: {str(e)}")
+            logger.error(f"Error processing PDF: {str(e)}")
             return ""
         
         return text

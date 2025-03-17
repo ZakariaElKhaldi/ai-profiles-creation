@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreateProfileRequest, ChatbotProfile } from '../../services/profileService';
+import { CreateProfileRequest, ChatbotProfile, ProfileSettings } from '../../services/profileService';
 import { getModelCategories, getModelsByCategory, Model } from '../../services/chatService';
 
 interface ProfileFormProps {
@@ -21,6 +21,13 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     description: initialData?.description || '',
     model: initialData?.model || 'openai/gpt-3.5-turbo',
     temperature: initialData?.temperature || 0.7,
+    personality_traits: initialData?.personality_traits || ['helpful', 'friendly'],
+    example_messages: initialData?.example_messages || [],
+    settings: initialData?.settings || {
+      document_limit: 10,
+      token_limit: 1000000,
+      response_time_limit: 30000
+    }
   });
   
   // Models state
@@ -28,6 +35,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [models, setModels] = useState<Record<string, Model>>({});
   const [loadingModels, setLoadingModels] = useState(false);
+
+  // Personality traits state
+  const [traitInput, setTraitInput] = useState('');
 
   // Load model categories and models on component mount
   useEffect(() => {
@@ -107,6 +117,25 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     }));
   };
 
+  // Add a personality trait
+  const handleAddTrait = () => {
+    if (traitInput.trim() === '') return;
+    
+    setFormData(prev => ({
+      ...prev,
+      personality_traits: [...prev.personality_traits, traitInput.trim()]
+    }));
+    setTraitInput('');
+  };
+
+  // Remove a personality trait
+  const handleRemoveTrait = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      personality_traits: prev.personality_traits.filter((_, i) => i !== index)
+    }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -138,6 +167,46 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           className="w-full rounded-md bg-zinc-800 border-zinc-700 text-white py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Describe what this chatbot profile is for..."
         />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-zinc-300 mb-1">
+          Personality Traits
+        </label>
+        <div className="flex mb-2">
+          <input
+            type="text"
+            value={traitInput}
+            onChange={(e) => setTraitInput(e.target.value)}
+            className="flex-1 rounded-l-md bg-zinc-800 border-zinc-700 text-white py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Add a personality trait..."
+          />
+          <button
+            type="button"
+            onClick={handleAddTrait}
+            className="px-4 py-2 bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600"
+          >
+            Add
+          </button>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {formData.personality_traits.map((trait, index) => (
+            <div key={index} className="bg-zinc-700 text-white px-3 py-1 rounded-full flex items-center">
+              <span>{trait}</span>
+              <button
+                type="button"
+                onClick={() => handleRemoveTrait(index)}
+                className="ml-2 text-zinc-400 hover:text-white"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+          {formData.personality_traits.length === 0 && (
+            <div className="text-zinc-500 text-sm">Add at least one personality trait</div>
+          )}
+        </div>
       </div>
       
       <div className="space-y-4">
@@ -201,6 +270,27 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           <span>Balanced (1.0)</span>
           <span>Creative (2.0)</span>
         </div>
+      </div>
+      
+      <div>
+        <label htmlFor="documentLimit" className="block text-sm font-medium text-zinc-300 mb-1">
+          Document Limit
+        </label>
+        <input
+          type="number"
+          id="documentLimit"
+          min="0"
+          value={formData.settings?.document_limit || 10}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            settings: {
+              ...prev.settings,
+              document_limit: parseInt(e.target.value)
+            }
+          }))}
+          className="w-full rounded-md bg-zinc-800 border-zinc-700 text-white py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <p className="text-xs text-zinc-500 mt-1">Maximum number of documents that can be attached (0 for unlimited)</p>
       </div>
       
       <div className="flex justify-end space-x-3 mt-6">
