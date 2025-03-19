@@ -1,158 +1,191 @@
 import React from 'react';
 
-export type ProcessingStage = 'queued' | 'parsing' | 'extracting' | 'indexing' | 'complete' | 'failed';
+export type ProcessingStage = 'parsing' | 'extracting' | 'indexing' | 'complete' | 'failed';
 
 interface ProcessingStatusProps {
   profileId: string;
   documentId: string;
   stage: ProcessingStage;
-  progress?: number;
-  error?: string;
-  onComplete?: () => void;
+  progress: number;
 }
 
 const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   profileId,
   documentId,
   stage,
-  progress = 0,
-  error,
-  onComplete
+  progress
 }) => {
   const getStageLabel = (stage: ProcessingStage): string => {
     switch (stage) {
-      case 'queued': return 'Queued for Processing';
-      case 'parsing': return 'Parsing Document';
-      case 'extracting': return 'Extracting Information';
-      case 'indexing': return 'Indexing Content';
-      case 'complete': return 'Processing Complete';
-      case 'failed': return 'Processing Failed';
-      default: return 'Unknown Stage';
+      case 'parsing':
+        return 'Parsing Document';
+      case 'extracting':
+        return 'Extracting Content';
+      case 'indexing':
+        return 'Indexing for AI';
+      case 'complete':
+        return 'Processing Complete';
+      case 'failed':
+        return 'Processing Failed';
+      default:
+        return 'Unknown Stage';
     }
   };
 
   const getStageDescription = (stage: ProcessingStage): string => {
     switch (stage) {
-      case 'queued': 
-        return 'Your document is in the processing queue and will be processed shortly.';
-      case 'parsing': 
-        return 'Reading and parsing the document structure and content.';
-      case 'extracting': 
-        return 'Extracting relevant information and data from the document.';
-      case 'indexing': 
-        return 'Indexing the extracted content for efficient AI querying.';
-      case 'complete': 
-        return 'Document has been fully processed and is ready for querying.';
-      case 'failed': 
-        return error || 'An error occurred during processing. Please try again.';
-      default: 
-        return 'Processing...';
+      case 'parsing':
+        return 'Converting your document to a format our system can understand.';
+      case 'extracting':
+        return 'Analyzing and extracting useful information from your document.';
+      case 'indexing':
+        return 'Organizing information to power AI responses for your queries.';
+      case 'complete':
+        return 'Your document has been successfully processed and is ready for AI queries.';
+      case 'failed':
+        return 'We encountered an issue while processing your document.';
+      default:
+        return 'No description available.';
     }
   };
 
-  // Calculate completed stages (for the step indicator)
-  const stages: ProcessingStage[] = ['queued', 'parsing', 'extracting', 'indexing', 'complete'];
-  const currentStageIndex = stages.indexOf(stage);
-  
-  return (
-    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4">Document Processing</h3>
-      
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">
-            {getStageLabel(stage)}
-          </span>
-          {stage !== 'failed' && (
-            <span className="text-sm font-medium text-gray-700">
-              {stage === 'complete' ? '100%' : `${progress}%`}
-            </span>
-          )}
+  const getStatusColor = (stage: ProcessingStage): string => {
+    switch (stage) {
+      case 'complete':
+        return 'text-green-400';
+      case 'failed':
+        return 'text-red-400';
+      default:
+        return 'text-yellow-400';
+    }
+  };
+
+  const renderProgressBar = () => {
+    if (stage === 'complete') {
+      return (
+        <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="bg-green-500 h-2 rounded-full w-full"></div>
         </div>
-        
-        {stage !== 'failed' ? (
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className={`h-2.5 rounded-full transition-all duration-300 ease-out ${
-                stage === 'complete' ? 'bg-green-600' : 'bg-blue-600'
-              }`}
-              style={{ width: stage === 'complete' ? '100%' : `${progress}%` }}
-            ></div>
-          </div>
-        ) : (
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-red-600 h-2.5 rounded-full" style={{ width: '100%' }}></div>
-          </div>
-        )}
-      </div>
-      
-      <div className="relative">
-        <div className="flex justify-between mb-4">
-          {stages.map((s, index) => (
-            <div 
-              key={s} 
-              className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                index <= currentStageIndex 
-                  ? (stage === 'failed' ? 'bg-red-500' : stage === 'complete' ? 'bg-green-500' : 'bg-blue-500') 
-                  : 'bg-gray-300'
-              } text-white text-xs`}
-            >
-              {index < currentStageIndex ? '✓' : index + 1}
-            </div>
-          ))}
+      );
+    } else if (stage === 'failed') {
+      return (
+        <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="bg-red-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
         </div>
-        
-        <div className="absolute top-3 left-0 w-full z-[-1]">
-          <div className="h-[2px] bg-gray-300 w-full"></div>
-        </div>
-        
-        <div className="absolute top-3 left-0 z-[-1]">
+      );
+    } else {
+      return (
+        <div className="w-full bg-gray-700 rounded-full h-2">
           <div 
-            className={`h-[2px] ${
-              stage === 'failed' 
-                ? 'bg-red-500' 
-                : stage === 'complete' 
-                  ? 'bg-green-500' 
-                  : 'bg-blue-500'
-            } transition-all duration-300 ease-out`}
-            style={{ 
-              width: currentStageIndex === 0 
-                ? '0%' 
-                : stage === 'complete'
-                  ? '100%'
-                  : `${(currentStageIndex / (stages.length - 1)) * 100}%`
-            }}
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+            style={{ width: `${progress}%` }}
           ></div>
         </div>
+      );
+    }
+  };
+
+  const renderStageIndicator = (currentStage: ProcessingStage, thisStage: ProcessingStage) => {
+    // Helper function to determine if this stage is completed
+    const isCompleted = () => {
+      const stages = ['parsing', 'extracting', 'indexing', 'complete'];
+      const currentIndex = stages.indexOf(currentStage);
+      const thisIndex = stages.indexOf(thisStage);
+      
+      return thisIndex < currentIndex || currentStage === thisStage && currentStage === 'complete';
+    };
+    
+    // Helper function to determine if this is the current stage
+    const isCurrent = () => currentStage === thisStage && currentStage !== 'complete';
+    
+    // Helper function to determine if this stage is upcoming
+    const isUpcoming = () => {
+      const stages = ['parsing', 'extracting', 'indexing', 'complete'];
+      const currentIndex = stages.indexOf(currentStage);
+      const thisIndex = stages.indexOf(thisStage);
+      
+      return thisIndex > currentIndex;
+    };
+    
+    const getStageClass = () => {
+      if (isCompleted()) {
+        return 'bg-green-500 text-white border-green-500';
+      } else if (isCurrent()) {
+        return 'bg-blue-500 text-white border-blue-500';
+      } else {
+        return 'bg-gray-700 text-gray-400 border-gray-600';
+      }
+    };
+    
+    const getLineClass = () => {
+      if (isCompleted()) {
+        return 'border-green-500';
+      } else {
+        return 'border-gray-600';
+      }
+    };
+    
+    // Don't render a line after the last stage
+    const showLine = thisStage !== 'complete';
+    
+    return (
+      <>
+        <div 
+          className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${getStageClass()}`}
+        >
+          {isCompleted() ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <span>{thisStage.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
+        {showLine && (
+          <div className={`flex-1 h-0 border-t-2 ${getLineClass()}`}></div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
+      <h3 className="text-xl font-semibold mb-2 text-gray-100">Document Processing</h3>
+      
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-sm font-medium text-gray-300">Document ID: {documentId}</span>
+        <span className={`text-sm font-medium ${getStatusColor(stage)}`}>
+          {getStageLabel(stage)}
+        </span>
       </div>
       
-      <div className="mt-6">
-        <p className="text-sm text-gray-600">
-          {getStageDescription(stage)}
-        </p>
+      {renderProgressBar()}
+      
+      <p className="my-4 text-sm text-gray-300">
+        {getStageDescription(stage)}
+      </p>
+      
+      <div className="mt-8">
+        <div className="flex items-center justify-between w-full">
+          {renderStageIndicator(stage, 'parsing')}
+          {renderStageIndicator(stage, 'extracting')}
+          {renderStageIndicator(stage, 'indexing')}
+          {renderStageIndicator(stage, 'complete')}
+        </div>
         
-        {stage === 'complete' && onComplete && (
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={onComplete}
-              className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded transition duration-200"
-            >
-              Continue
-            </button>
-          </div>
-        )}
-        
-        {stage === 'failed' && (
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-200"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+        <div className="flex justify-between mt-2">
+          <span className="text-xs text-gray-400">Parsing</span>
+          <span className="text-xs text-gray-400">Extracting</span>
+          <span className="text-xs text-gray-400">Indexing</span>
+          <span className="text-xs text-gray-400">Complete</span>
+        </div>
       </div>
+      
+      {stage === 'failed' && (
+        <div className="mt-4 text-sm p-3 bg-red-900 bg-opacity-30 border border-red-800 rounded text-red-400">
+          We encountered an error processing your document. Please try uploading it again.
+        </div>
+      )}
     </div>
   );
 };

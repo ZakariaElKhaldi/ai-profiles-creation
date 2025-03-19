@@ -21,39 +21,43 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Handle ESC key press to close modal
+  // Close modal when clicking outside
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Disable body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('mousedown', handleClickOutside);
+      // Re-enable body scroll when modal is closed
+      document.body.style.overflow = 'auto';
     };
   }, [isOpen, onClose]);
 
-  // Handle click outside modal to close
-  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (closeOnClickOutside && modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
-
-  // Prevent scrolling when modal is open
+  // Close on ESC key press
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Size classes for modal
   const sizeClasses = {
@@ -66,23 +70,20 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={handleOutsideClick}
-    >
-      <div 
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 transition-opacity">
+      <div
         ref={modalRef}
-        className={`bg-white rounded-lg shadow-xl w-full mx-4 ${sizeClasses[size]} animate-fade-in-up`}
+        className={`${sizeClasses[size]} w-full bg-gray-800 rounded-lg shadow-xl border border-gray-700 transform transition-all`}
       >
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h3 className="text-lg font-medium text-gray-100">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            aria-label="Close"
+            className="text-gray-400 hover:text-gray-200 focus:outline-none"
           >
             <svg
-              className="h-6 w-6"
+              className="h-5 w-5"
+              xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -90,19 +91,17 @@ const Modal: React.FC<ModalProps> = ({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2"
+                strokeWidth={2}
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
           </button>
         </div>
         
-        <div className="px-6 py-4">
-          {children}
-        </div>
+        <div className="p-6 text-gray-300">{children}</div>
         
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <div className="px-6 py-4 border-t border-gray-700 bg-gray-700 rounded-b-lg">
             {footer}
           </div>
         )}

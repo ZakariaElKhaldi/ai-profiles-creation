@@ -7,141 +7,156 @@ interface FileUploaderProps {
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const allowedFileTypes = [
-    'application/pdf',
-    'text/csv',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ];
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) {
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      setFiles(selectedFiles);
+      setError(null);
     }
-
-    const file = files[0];
-    
-    if (!allowedFileTypes.includes(file.type)) {
-      setError('Invalid file type. Please upload a PDF or CSV file.');
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      setError('File size exceeds 10MB limit.');
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    setError(null);
-    setSelectedFile(file);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file first.');
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const selectedFiles = Array.from(e.dataTransfer.files);
+      setFiles(selectedFiles);
+      setError(null);
+    }
+  };
+
+  const handleUpload = () => {
+    if (files.length === 0) {
+      setError('Please select files to upload');
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulating file upload with progress
-    // This would be replaced with actual API call to backend
-    try {
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setUploadProgress(i);
-      }
+    // Simulate upload progress
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        const nextProgress = prev + 10;
+        if (nextProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsUploading(false);
+            setFiles([]);
+            onUploadComplete();
+          }, 500);
+          return 100;
+        }
+        return nextProgress;
+      });
+    }, 500);
+  };
 
-      // Simulate successful upload
-      console.log(`Uploading file ${selectedFile.name} to profile ${profileId}`);
-      setIsUploading(false);
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      onUploadComplete();
-    } catch (err) {
-      setError('Upload failed. Please try again.');
-      setIsUploading(false);
+  const handleCancel = () => {
+    setFiles([]);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' bytes';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+  };
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4">Upload Document</h3>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      
-      <div className="mb-4">
-        <p className="text-sm text-gray-600 mb-2">
-          Upload a PDF or CSV file (max 10MB). The document will be processed and the data will be extracted for AI usage.
-        </p>
-        
-        <div className="flex items-center justify-center w-full">
-          <label 
-            className="flex flex-col w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+    <div className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
+      <h3 className="text-xl font-semibold mb-4 text-gray-100">Upload Files</h3>
+      <p className="text-gray-300 mb-4">
+        Upload PDF, DOCX, or TXT files to add to your AI profile's knowledge base.
+      </p>
+
+      {isUploading ? (
+        <UploadProgress progress={uploadProgress} />
+      ) : (
+        <>
+          <div
+            className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer bg-gray-900"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <div className="flex flex-col items-center justify-center pt-7">
-              <svg 
-                className="w-8 h-8 text-gray-400" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth="2" 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                ></path>
-              </svg>
-              <p className="pt-1 text-sm text-gray-500">
-                {selectedFile ? selectedFile.name : 'Drag and drop a file or click to browse'}
-              </p>
-            </div>
-            <input 
-              type="file" 
-              className="hidden" 
-              accept=".pdf,.csv,.xlsx,.xls" 
-              onChange={handleFileChange} 
-              disabled={isUploading}
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
               ref={fileInputRef}
+              accept=".pdf,.docx,.txt"
             />
-          </label>
-        </div>
-      </div>
-      
-      {isUploading && <UploadProgress progress={uploadProgress} />}
-      
-      {selectedFile && !isUploading && (
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleUpload}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-200"
-          >
-            Upload Document
-          </button>
-        </div>
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              stroke="currentColor"
+              fill="none"
+              viewBox="0 0 48 48"
+              aria-hidden="true"
+            >
+              <path
+                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-8m-12 0H8m12 0a4 4 0 01-4-4v-4m32 0h-4m-4 0h-8m-12 0h-4m4-4h32a4 4 0 000-8H12a4 4 0 00-4 4v4h4m4 0h12"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <p className="mt-2 text-sm text-gray-400">
+              Drag and drop files here, or click to select files
+            </p>
+            <p className="mt-1 text-xs text-gray-500">PDF, DOCX, TXT up to 10MB each</p>
+          </div>
+
+          {error && <p className="mt-2 text-red-400 text-sm">{error}</p>}
+
+          {files.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2 text-gray-300">Selected Files</h4>
+              <ul className="space-y-2 max-h-40 overflow-y-auto bg-gray-850 rounded p-2">
+                {files.map((file, index) => (
+                  <li key={index} className="text-sm flex justify-between items-center text-gray-300">
+                    <span className="truncate max-w-xs">{file.name}</span>
+                    <span className="text-gray-400 ml-2">{formatFileSize(file.size)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end space-x-3">
+            {files.length > 0 && (
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              onClick={handleUpload}
+              className="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-700"
+              disabled={files.length === 0}
+            >
+              Upload Files
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

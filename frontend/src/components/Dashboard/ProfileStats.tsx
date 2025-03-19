@@ -53,14 +53,14 @@ const ProfileStats: React.FC = () => {
         {stats.map((stat, index) => (
           <div 
             key={index} 
-            className="bg-white rounded-lg shadow p-5 border border-gray-200"
+            className="bg-gray-800 rounded-lg shadow-md p-5 border border-gray-700"
           >
-            <div className="text-gray-500 text-sm mb-1">{stat.label}</div>
+            <div className="text-gray-400 text-sm mb-1">{stat.label}</div>
             <div className="flex items-end">
-              <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
+              <div className="text-2xl font-bold text-gray-100">{stat.value}</div>
               {stat.change && (
                 <div className={`ml-2 text-sm flex items-center ${
-                  stat.change.isPositive ? 'text-green-600' : 'text-red-600'
+                  stat.change.isPositive ? 'text-green-400' : 'text-red-400'
                 }`}>
                   <span>
                     {stat.change.isPositive ? '↑' : '↓'} {stat.change.value}%

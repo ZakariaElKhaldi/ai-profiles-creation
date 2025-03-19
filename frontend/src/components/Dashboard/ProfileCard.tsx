@@ -28,14 +28,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onDelete }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
       <div className="p-5">
         <div className="flex justify-between items-start">
-          <h3 className="text-xl font-semibold text-gray-800">{profile.name}</h3>
+          <h3 className="text-xl font-semibold text-gray-100">{profile.name}</h3>
           <div className="relative">
             <button 
               onClick={handleDeleteClick} 
-              className="text-gray-500 hover:text-red-500"
+              className="text-gray-400 hover:text-red-400"
               aria-label="Delete profile"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
@@ -44,19 +44,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onDelete }) => {
             </button>
             
             {showDeleteConfirm && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+              <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-10 border border-gray-600">
                 <div className="p-3">
-                  <p className="text-sm text-gray-700 mb-2">Delete this profile?</p>
+                  <p className="text-sm text-gray-200 mb-2">Delete this profile?</p>
                   <div className="flex justify-end space-x-2">
                     <button 
                       onClick={cancelDelete}
-                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800"
+                      className="px-2 py-1 text-xs text-gray-300 hover:text-gray-100"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={confirmDelete}
-                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
                     >
                       Delete
                     </button>
@@ -69,42 +69,42 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onDelete }) => {
         
         <div className="mt-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Created</span>
-            <span className="text-gray-700">{formatDate(profile.createdAt)}</span>
+            <span className="text-gray-400">Created</span>
+            <span className="text-gray-300">{formatDate(profile.createdAt)}</span>
           </div>
           
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Documents</span>
-            <span className="text-gray-700">{profile.documentCount}</span>
+            <span className="text-gray-400">Documents</span>
+            <span className="text-gray-300">{profile.documentCount}</span>
           </div>
           
           {profile.lastQueried && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Last Queried</span>
-              <span className="text-gray-700">{formatDate(profile.lastQueried)}</span>
+              <span className="text-gray-400">Last Queried</span>
+              <span className="text-gray-300">{formatDate(profile.lastQueried)}</span>
             </div>
           )}
           
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">API Key</span>
-            <span className={`${profile.hasApiKey ? 'text-green-600' : 'text-orange-500'}`}>
+            <span className="text-gray-400">API Key</span>
+            <span className={`${profile.hasApiKey ? 'text-green-400' : 'text-yellow-400'}`}>
               {profile.hasApiKey ? 'Active' : 'Not Generated'}
             </span>
           </div>
         </div>
       </div>
       
-      <div className="bg-gray-50 px-5 py-3 flex justify-between border-t border-gray-200">
+      <div className="bg-gray-700 px-5 py-3 flex justify-between border-t border-gray-600">
         <Link 
           to={`/profile/${profile.id}`}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          className="text-blue-400 hover:text-blue-300 text-sm font-medium"
         >
           Manage
         </Link>
         
         <Link 
           to={`/profile/${profile.id}/query`}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          className="text-blue-400 hover:text-blue-300 text-sm font-medium"
         >
           Query
         </Link>

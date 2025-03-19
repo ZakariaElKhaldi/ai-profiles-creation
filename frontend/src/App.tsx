@@ -22,6 +22,10 @@ import QueryHistory from './components/Query/QueryHistory';
 import FileUploader from './components/Upload/FileUploader';
 import ProcessingStatus, { ProcessingStage } from './components/Upload/ProcessingStatus';
 
+// Document Components
+import DocumentList from './components/Documents/DocumentList';
+import DocumentDetails from './components/Documents/DocumentDetails';
+
 // Key Components
 import KeyGenerator from './components/Keys/KeyGenerator';
 
@@ -41,6 +45,46 @@ const mockQueryHistory = [
     query: 'What are the shipping options?',
     timestamp: '2023-10-21T11:15:00',
     truncatedAnswer: 'We offer standard shipping (3-5 business days), express shipping (1-2 business days), and same-day delivery in select areas.'
+  }
+];
+
+// Mock documents data
+const mockDocuments = [
+  {
+    id: 'doc1',
+    name: 'Business Proposal Q2 2023.pdf',
+    fileType: 'pdf',
+    uploadDate: '2023-10-15T14:32:00',
+    size: 2547698,
+    status: 'active' as const,
+    pageCount: 18
+  },
+  {
+    id: 'doc2',
+    name: 'Financial Report 2023.xlsx',
+    fileType: 'xlsx',
+    uploadDate: '2023-10-14T09:15:00',
+    size: 1258291,
+    status: 'active' as const,
+    pageCount: 35
+  },
+  {
+    id: 'doc3',
+    name: 'Meeting Notes.docx',
+    fileType: 'docx',
+    uploadDate: '2023-10-12T16:45:00',
+    size: 458762,
+    status: 'active' as const,
+    pageCount: 4
+  },
+  {
+    id: 'doc4',
+    name: 'Product Specifications.pdf',
+    fileType: 'pdf',
+    uploadDate: '2023-10-10T11:20:00',
+    size: 3254168,
+    status: 'processing' as const,
+    pageCount: 26
   }
 ];
 
@@ -68,6 +112,12 @@ const App: React.FC = () => {
     // Simulate processing stages
     setTimeout(() => setProcessingStage('indexing'), 3000);
     setTimeout(() => setProcessingStage('complete'), 6000);
+  };
+
+  // Handle document deletion
+  const handleDocumentDelete = (documentId: string) => {
+    showToast(`Document ${documentId} deleted successfully`, 'success');
+    // In a real app, this would trigger an API call to delete the document
   };
 
   // Handle API key generation
@@ -101,7 +151,7 @@ const App: React.FC = () => {
             path="/profile/:id" 
             element={
               <div className="space-y-8">
-                <h2 className="text-2xl font-bold">Profile Management</h2>
+                <h2 className="text-2xl font-bold text-gray-100">Profile Management</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <FileUploader 
                     profileId="123" 
@@ -135,6 +185,26 @@ const App: React.FC = () => {
                 />
               </div>
             } 
+          />
+
+          {/* Document Routes */}
+          <Route 
+            path="/profile/:id/documents" 
+            element={
+              <div className="space-y-8">
+                <h2 className="text-2xl font-bold text-gray-100">Profile Documents</h2>
+                <DocumentList 
+                  profileId="123" 
+                  documents={mockDocuments} 
+                  onDelete={handleDocumentDelete} 
+                />
+              </div>
+            } 
+          />
+          
+          <Route 
+            path="/documents/:documentId" 
+            element={<DocumentDetails onDelete={handleDocumentDelete} />} 
           />
         </Routes>
         
