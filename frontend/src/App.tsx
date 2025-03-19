@@ -29,6 +29,9 @@ import DocumentDetails from './components/Documents/DocumentDetails';
 // Key Components
 import KeyGenerator from './components/Keys/KeyGenerator';
 
+// Settings Components
+import SettingsPage from './components/Settings/SettingsPage';
+
 // Common Components
 import Toast from './components/Common/Toast';
 
@@ -205,6 +208,12 @@ const App: React.FC = () => {
           <Route 
             path="/documents/:documentId" 
             element={<DocumentDetails onDelete={handleDocumentDelete} />} 
+          />
+
+          {/* Settings Route */}
+          <Route 
+            path="/settings" 
+            element={<SettingsPage />} 
           />
         </Routes>
         
