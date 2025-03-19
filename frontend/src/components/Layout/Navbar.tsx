@@ -10,7 +10,7 @@ const Navbar: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/"
                 className={`${
-                  isActive('/') 
+                  isActive('/') && location.pathname === '/'
                     ? 'border-blue-500 text-white' 
                     : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-gray-100'
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
@@ -43,6 +43,16 @@ const Navbar: React.FC = () => {
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 Create Profile
+              </Link>
+              <Link
+                to="/profile/123/documents"
+                className={`${
+                  location.pathname.includes('/documents') 
+                    ? 'border-blue-500 text-white' 
+                    : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-gray-100'
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Documents
               </Link>
             </div>
           </div>
@@ -96,7 +106,7 @@ const Navbar: React.FC = () => {
             <Link
               to="/"
               className={`${
-                isActive('/') 
+                isActive('/') && location.pathname === '/'
                   ? 'bg-gray-700 border-blue-500 text-white' 
                   : 'border-transparent text-gray-300 hover:bg-gray-700 hover:text-white'
               } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
@@ -114,6 +124,17 @@ const Navbar: React.FC = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Create Profile
+            </Link>
+            <Link
+              to="/profile/123/documents"
+              className={`${
+                location.pathname.includes('/documents') 
+                  ? 'bg-gray-700 border-blue-500 text-white' 
+                  : 'border-transparent text-gray-300 hover:bg-gray-700 hover:text-white'
+              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Documents
             </Link>
           </div>
         </div>
