@@ -67,18 +67,28 @@ async def get_profile_with_stats(profile_id: str):
     return profile
 
 
-@router.post("/", response_model=Profile)
+@router.post("/", response_model=Profile, status_code=status.HTTP_201_CREATED)
 async def create_profile(
     profile_create: ProfileCreate,
-    user_id: Optional[str] = None
+    current_user: Optional[str] = None
 ):
     """Create a new AI profile"""
     try:
-        return profile_service.create_profile(profile_create, user_id)
-    except ValueError as e:
+        logger.info(f"Creating profile: {profile_create}")
+        profile = profile_service.create_profile(profile_create, current_user)
+        return profile
+    except ValueError as ve:
+        logger.error(f"Validation error in profile creation: {str(ve)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=str(ve)
+        )
+    except TypeError as te:
+        # Handle JSON serialization errors
+        logger.error(f"Type error in profile creation (possible serialization issue): {str(te)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create profile due to type error: {str(te)}"
         )
     except Exception as e:
         logger.error(f"Error creating profile: {str(e)}")

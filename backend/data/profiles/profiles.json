@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "name": "bo2",
+      "description": "hi",
+      "system_prompt": "",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.7,
+      "max_tokens": 4000,
+      "id": "cee3c885-cad6-4891-a4ed-1098680be2a2",
+      "user_id": null,
+      "created_at": "2025-03-19T17:52:32.098375",
+      "updated_at": "2025-03-19T17:52:32.098375",
+      "status": "draft",
+      "document_ids": []
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import json
 from typing import Dict, List, Optional, Any
 import logging
 from datetime import datetime
+from fastapi import HTTPException
 
 from app.models.openrouter import (
     CompletionRequest, 
@@ -64,10 +65,25 @@ class OpenRouterClient:
                     logger.error(f"Failed to get models: {response.text}")
                     response.raise_for_status()
                 
-                return ModelsResponse(data=response.json())
+                # Log the response for debugging
+                response_data = response.json()
+                logger.debug(f"Models response structure: {type(response_data)}")
+                
+                if isinstance(response_data, dict):
+                    logger.debug(f"Models response keys: {list(response_data.keys())}")
+                    # If there's a 'data' key, extract it
+                    if 'data' in response_data:
+                        logger.debug(f"Models data type: {type(response_data['data'])}")
+                        logger.debug(f"Number of models: {len(response_data['data'])}")
+                
+                # Wrap response in ModelsResponse
+                return ModelsResponse(data=response_data)
         except httpx.RequestError as e:
             logger.error(f"Network error while getting models: {str(e)}")
             raise
+        except ValueError as e:
+            logger.error(f"JSON parsing error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error parsing OpenRouter response: {str(e)}")
         except Exception as e:
             logger.error(f"Unexpected error in get_models: {str(e)}")
             raise

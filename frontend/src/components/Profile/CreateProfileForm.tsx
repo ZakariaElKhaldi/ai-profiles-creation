@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { openRouterService } from '../../services/api';
+import { openRouterService, profileService } from '../../services/api';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be less than 50 characters'),
@@ -52,32 +52,30 @@ const CreateProfileForm: React.FC = () => {
     setSuccess(null);
     
     try {
-      // This would be replaced with actual API call
       console.log('Creating profile:', data);
       
-      // Mock successful creation
+      // Convert form data to API format
+      const profileData = {
+        name: data.name,
+        description: data.description || '',
+        system_prompt: '',  // Default empty system prompt
+        model: data.aiModel,
+        temperature: data.temperature,
+        max_tokens: parseInt(data.contextLength.replace('k', '000')), // Convert 16k to 16000
+      };
+      
+      // Call the actual API
+      const newProfile = await profileService.createProfile(profileData);
+      
+      setSuccess('Profile created successfully!');
+      setIsLoading(false);
+      
+      // Redirect to the new profile page
       setTimeout(() => {
-        setSuccess('Profile created successfully!');
-        setIsLoading(false);
-        
-        // Store the created profile in localStorage for demo purposes
-        const existingProfiles = JSON.parse(localStorage.getItem('aiProfiles') || '[]');
-        const newProfile = {
-          id: Date.now().toString(),
-          ...data,
-          createdAt: new Date().toISOString(),
-          documentCount: 0,
-          hasApiKey: false
-        };
-        localStorage.setItem('aiProfiles', JSON.stringify([...existingProfiles, newProfile]));
-        
-        // Redirect to dashboard after 1 second
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+        navigate(`/profile/${newProfile.id}`);
       }, 1000);
-    } catch (err) {
-      setError('Failed to create profile. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create profile. Please try again.');
       setIsLoading(false);
     }
   };

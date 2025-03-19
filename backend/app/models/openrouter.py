@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class Message(BaseModel):
@@ -72,7 +72,19 @@ class ModelsResponse(BaseModel):
     """Model for the OpenRouter API response for available models"""
     model_config = ConfigDict(extra='allow')
     
-    data: List[AvailableModel]
+    data: List[AvailableModel] = Field(default_factory=list)
+    
+    @field_validator('data', mode='before')
+    @classmethod
+    def validate_data(cls, v):
+        # If data is not a list but a dict with data key, extract it
+        if isinstance(v, dict) and 'data' in v:
+            return v['data']
+        # If it's already a list, just return it
+        if isinstance(v, list):
+            return v
+        # If it's something else, return an empty list
+        return []
 
 
 class APIKeyResponse(BaseModel):

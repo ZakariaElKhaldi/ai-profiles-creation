@@ -23,6 +23,7 @@ async def get_models():
     try:
         active_key = key_manager.get_active_key()
         if not active_key:
+            logger.info("No active API key, returning default models list")
             # Return a default list of popular models when no API key is available
             return ModelsResponse(data=[
                 {
@@ -61,8 +62,25 @@ async def get_models():
                     "top_provider": "Mistral"
                 }
             ])
-            
-        return await openrouter_client.get_models()
+        
+        logger.info(f"Fetching models from OpenRouter with API key {active_key[:4]}...")
+        try:
+            models_response = await openrouter_client.get_models()
+            logger.info(f"Successfully retrieved {len(models_response.data)} models from OpenRouter")
+            return models_response
+        except Exception as model_error:
+            logger.error(f"Error fetching models from OpenRouter: {str(model_error)}")
+            # Fall back to default models if API call fails
+            logger.info("Falling back to default models list due to API error")
+            return ModelsResponse(data=[
+                {
+                    "id": "gpt-3.5-turbo",
+                    "name": "GPT-3.5 Turbo (Fallback)",
+                    "description": "A good balance between performance and cost",
+                    "context_length": 4096,
+                    "top_provider": "OpenAI"
+                }
+            ])
     except Exception as e:
         logger.error(f"Error getting models: {str(e)}")
         raise HTTPException(

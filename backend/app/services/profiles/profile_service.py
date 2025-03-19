@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime
 import logging
 from pathlib import Path
+import os
 
 from app.models.profiles import (
     ProfileCreate,
@@ -19,11 +20,23 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Custom JSON encoder to handle datetime objects
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
 # Define the path for storing profile data
-PROFILES_DIR = Path("backend/data/profiles")
+BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+PROFILES_DIR = BASE_DIR / "data" / "profiles"
 PROFILES_DB = PROFILES_DIR / "profiles.json"
 PROFILE_STATS_DB = PROFILES_DIR / "profile_stats.json"
 
+# Log the resolved paths
+logger.info(f"BASE_DIR: {BASE_DIR}")
+logger.info(f"PROFILES_DIR: {PROFILES_DIR}")
+logger.info(f"PROFILES_DB: {PROFILES_DB}")
 
 class ProfileService:
     """Service for AI profile management operations"""
@@ -41,15 +54,24 @@ class ProfileService:
     
     def _ensure_dirs(self):
         """Ensure the profile directories exist"""
-        self.profiles_dir.mkdir(parents=True, exist_ok=True)
-        
-        if not self.profiles_db.exists():
-            with open(self.profiles_db, "w") as f:
-                json.dump({"profiles": []}, f)
-        
-        if not self.profile_stats_db.exists():
-            with open(self.profile_stats_db, "w") as f:
-                json.dump({"profile_stats": {}}, f)
+        try:
+            # Create profiles directory
+            self.profiles_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Ensured profiles directory exists: {self.profiles_dir}")
+            
+            if not self.profiles_db.exists():
+                with open(self.profiles_db, "w") as f:
+                    json.dump({"profiles": []}, f)
+                logger.info(f"Created profiles database file: {self.profiles_db}")
+            
+            if not self.profile_stats_db.exists():
+                with open(self.profile_stats_db, "w") as f:
+                    json.dump({"profile_stats": {}}, f)
+                logger.info(f"Created profile stats database file: {self.profile_stats_db}")
+        except Exception as e:
+            logger.error(f"Error ensuring directories and files exist: {str(e)}")
+            # Re-raise to ensure application can detect the startup issue
+            raise
     
     def _read_profiles(self) -> List[Dict]:
         """Read profiles from the storage file"""
@@ -65,7 +87,7 @@ class ProfileService:
         """Write profiles to the storage file"""
         try:
             with open(self.profiles_db, "w") as f:
-                json.dump({"profiles": profiles}, f, indent=2)
+                json.dump({"profiles": profiles}, f, indent=2, cls=DateTimeEncoder)
         except Exception as e:
             logger.error(f"Error writing profiles file: {str(e)}")
             raise
@@ -84,7 +106,7 @@ class ProfileService:
         """Write profile stats to the storage file"""
         try:
             with open(self.profile_stats_db, "w") as f:
-                json.dump({"profile_stats": profile_stats}, f, indent=2)
+                json.dump({"profile_stats": profile_stats}, f, indent=2, cls=DateTimeEncoder)
         except Exception as e:
             logger.error(f"Error writing profile stats file: {str(e)}")
             raise
@@ -124,36 +146,51 @@ class ProfileService:
     
     def create_profile(self, profile_create: ProfileCreate, user_id: Optional[str] = None) -> Profile:
         """Create a new AI profile"""
-        # Check profile limit per user
-        if user_id:
-            user_profiles = [p for p in self._read_profiles() if p.get("user_id") == user_id]
-            if len(user_profiles) >= settings.MAX_PROFILES_PER_USER:
-                raise ValueError(
-                    f"Maximum number of profiles ({settings.MAX_PROFILES_PER_USER}) reached for this user"
-                )
-        
-        # Create profile record
-        profile_data = profile_create.dict()
-        profile = ProfileInDB(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            **profile_data,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-            status=ProfileStatus.DRAFT
-        )
-        
-        # Save to database
-        profiles = self._read_profiles()
-        profiles.append(profile.dict())
-        self._write_profiles(profiles)
-        
-        # Initialize profile stats
-        profile_stats = self._read_profile_stats()
-        profile_stats[profile.id] = ProfileStats().dict()
-        self._write_profile_stats(profile_stats)
-        
-        return Profile(**profile.dict())
+        try:
+            # Check profile limit per user
+            if user_id:
+                user_profiles = [p for p in self._read_profiles() if p.get("user_id") == user_id]
+                if len(user_profiles) >= settings.MAX_PROFILES_PER_USER:
+                    raise ValueError(
+                        f"Maximum number of profiles ({settings.MAX_PROFILES_PER_USER}) reached for this user"
+                    )
+            
+            # Create profile record
+            profile_data = profile_create.dict()
+            profile_id = str(uuid.uuid4())
+            
+            # Create timestamps as strings directly to avoid serialization issues
+            current_time = datetime.now().isoformat()
+            
+            profile = ProfileInDB(
+                id=profile_id,
+                user_id=user_id,
+                **profile_data,
+                created_at=current_time,
+                updated_at=current_time,
+                status=ProfileStatus.DRAFT
+            )
+            
+            logger.info(f"Creating new profile with ID: {profile_id}")
+            
+            # Save to database
+            profiles = self._read_profiles()
+            profile_dict = profile.dict()
+            profiles.append(profile_dict)
+            
+            logger.debug(f"Writing profile to database: {profile_dict}")
+            self._write_profiles(profiles)
+            
+            # Initialize profile stats
+            profile_stats = self._read_profile_stats()
+            profile_stats[profile.id] = ProfileStats().dict()
+            self._write_profile_stats(profile_stats)
+            
+            logger.info(f"Successfully created profile: {profile_id}")
+            return Profile(**profile.dict())
+        except Exception as e:
+            logger.error(f"Error creating profile: {str(e)}")
+            raise
     
     def update_profile(self, profile_id: str, profile_update: ProfileUpdate) -> Optional[Profile]:
         """Update profile information"""
@@ -169,7 +206,7 @@ class ProfileService:
                     for field, value in update_data.items():
                         profile[field] = value
                     
-                    # Update the updated_at timestamp
+                    # Update the updated_at timestamp as isoformat string
                     profile["updated_at"] = datetime.now().isoformat()
                     
                     # Update the profiles list
@@ -256,7 +293,7 @@ class ProfileService:
             else:
                 stats["average_response_time"] = query_time
         
-        # Update last used timestamp
+        # Update last used timestamp as isoformat string
         stats["last_used"] = datetime.now().isoformat()
         
         # Save stats
