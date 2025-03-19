@@ -67,38 +67,149 @@ export interface ActiveKeyInfo {
 }
 
 class OpenRouterService {
+  private isRefreshingKey = false;
+  private lastActiveKey: string | null = null;
+
   async getModels(): Promise<ModelsResponse> {
-    const response = await api.get('/openrouter/models');
-    return response.data;
+    try {
+      const response = await api.get('/openrouter/models');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      throw error;
+    }
   }
 
   async createCompletion(request: CompletionRequest): Promise<CompletionResponse> {
-    const response = await api.post('/openrouter/chat/completions', request);
-    return response.data;
+    try {
+      // Check if we have an active key
+      const activeKey = await this.getActiveKeyInternal();
+      if (!activeKey) {
+        throw new Error('No active API key. Please add an API key first.');
+      }
+      
+      console.log(`Using model: ${request.model}`);
+      
+      const response = await api.post('/openrouter/chat/completions', request);
+      return response.data;
+    } catch (error: any) {
+      // Check if this is an authentication error
+      if (error.message && error.message.includes('No auth credentials found')) {
+        console.warn('Authentication failed. Attempting to refresh API key...');
+        
+        // If we're not already refreshing, try to refresh the key
+        if (!this.isRefreshingKey) {
+          this.isRefreshingKey = true;
+          try {
+            // Get the active key again (force refresh)
+            await this.refreshActiveKey();
+            this.isRefreshingKey = false;
+            
+            // Retry the request
+            console.log('Retrying request after key refresh...');
+            const retryResponse = await api.post('/openrouter/chat/completions', request);
+            return retryResponse.data;
+          } catch (refreshError) {
+            this.isRefreshingKey = false;
+            console.error('Failed to refresh key:', refreshError);
+            throw refreshError;
+          }
+        }
+      }
+      
+      console.error('Error creating completion:', error);
+      throw error;
+    }
   }
 
   async listKeys(): Promise<APIKeyListResponse> {
-    const response = await api.get('/openrouter/keys');
-    return response.data;
+    try {
+      const response = await api.get('/openrouter/keys');
+      return response.data;
+    } catch (error) {
+      console.error('Error listing keys:', error);
+      throw error;
+    }
   }
 
   async addKey(key: string): Promise<APIKey> {
-    const response = await api.post('/openrouter/keys', { key });
-    return response.data;
+    try {
+      const response = await api.post('/openrouter/keys', { key });
+      return response.data;
+    } catch (error) {
+      console.error('Error adding key:', error);
+      throw error;
+    }
   }
 
   async deleteKey(key: string): Promise<void> {
-    await api.delete(`/openrouter/keys/${key}`);
+    try {
+      await api.delete(`/openrouter/keys/${key}`);
+    } catch (error) {
+      console.error('Error deleting key:', error);
+      throw error;
+    }
   }
 
   async setActiveKey(key: string): Promise<{ message: string }> {
-    const response = await api.post('/openrouter/keys/active', { key });
-    return response.data;
+    try {
+      const response = await api.post('/openrouter/keys/active', { key });
+      // Update our cached key
+      this.lastActiveKey = key;
+      return response.data;
+    } catch (error) {
+      console.error('Error setting active key:', error);
+      throw error;
+    }
   }
 
   async getActiveKey(): Promise<ActiveKeyInfo> {
-    const response = await api.get('/openrouter/keys/active');
-    return response.data;
+    try {
+      const response = await api.get('/openrouter/keys/active');
+      // Cache the active status
+      if (response.data.active && response.data.key) {
+        const keyParts = response.data.key.split('...');
+        if (keyParts.length === 2) {
+          this.lastActiveKey = response.data.key;
+        }
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error getting active key:', error);
+      throw error;
+    }
+  }
+
+  private async getActiveKeyInternal(): Promise<string | null> {
+    try {
+      const activeKeyInfo = await this.getActiveKey();
+      return activeKeyInfo.active ? this.lastActiveKey : null;
+    } catch (error) {
+      console.error('Error getting active key internal:', error);
+      return null;
+    }
+  }
+
+  private async refreshActiveKey(): Promise<void> {
+    try {
+      // Reset the cached key
+      this.lastActiveKey = null;
+      // Force get the latest key
+      await this.getActiveKey();
+    } catch (error) {
+      console.error('Error refreshing active key:', error);
+      throw error;
+    }
+  }
+
+  async getDiagnostic(): Promise<any> {
+    try {
+      const response = await api.get('/openrouter/diagnostic');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting diagnostic info:', error);
+      throw error;
+    }
   }
 }
 

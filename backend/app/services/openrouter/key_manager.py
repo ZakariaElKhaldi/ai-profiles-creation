@@ -111,24 +111,37 @@ class KeyManager:
     
     def get_active_key(self) -> Optional[str]:
         """Get the currently active API key"""
-        return settings.OPENROUTER_API_KEY
+        active_key = settings.OPENROUTER_API_KEY
+        
+        if not active_key:
+            logger.warning("No active OpenRouter API key found")
+            return None
+        
+        logger.debug(f"Retrieved active key: {active_key[:4]}...{active_key[-4:]}")
+        return active_key
     
     def set_active_key(self, key: str) -> bool:
         """Set the active API key to use for OpenRouter calls"""
-        if not key:
+        if not key or not isinstance(key, str):
+            logger.error("Invalid key provided to set_active_key")
             return False
-            
+        
         if not self._validate_key_format(key):
+            logger.error(f"Invalid key format: {key[:4]}...")
             raise ValueError("Invalid API key format. OpenRouter keys should start with 'sk-or-' or 'sk-'")
-            
+        
         keys = self._read_keys()
         
         # Check if key exists
         if not any(k["key"] == key for k in keys):
             # Save key if it doesn't exist
+            logger.info(f"Adding new key to storage: {key[:4]}...")
             self.add_key(key)
+        else:
+            logger.info(f"Using existing key: {key[:4]}...")
         
         # Update active key in settings and client
+        logger.info(f"Setting active key: {key[:4]}...{key[-4:]}")
         settings.OPENROUTER_API_KEY = key
         openrouter_client.api_key = key
         

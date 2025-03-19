@@ -75,12 +75,19 @@ async def get_models():
 async def create_completion(request: CompletionRequest):
     """Create a chat completion using OpenRouter"""
     try:
-        if not key_manager.get_active_key():
+        active_key = key_manager.get_active_key()
+        if not active_key:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No OpenRouter API key provided. Please add an API key first."
             )
-            
+        
+        # Ensure the client has the latest active key
+        openrouter_client.api_key = active_key
+        
+        logger.info(f"Using API key: {active_key[:4]}...{active_key[-4:]}")
+        logger.info(f"Request model: {request.model}")
+        
         return await openrouter_client.create_completion(request)
     except Exception as e:
         logger.error(f"Error creating completion: {str(e)}")
@@ -169,4 +176,29 @@ async def get_active_key():
     return {
         "active": True,
         "key": f"{active_key[:4]}...{active_key[-4:]}" if active_key else None
+    }
+
+
+@router.get("/diagnostic")
+async def diagnostic():
+    """Diagnostic endpoint to check API key configuration"""
+    active_key = key_manager.get_active_key()
+    client_key = openrouter_client.api_key
+    
+    # Check if keys match
+    keys_match = active_key == client_key
+    
+    # Format keys for safe display
+    formatted_active = f"{active_key[:4]}...{active_key[-4:]}" if active_key else "None"
+    formatted_client = f"{client_key[:4]}...{client_key[-4:]}" if client_key else "None"
+    
+    return {
+        "status": "ok",
+        "active_key_exists": bool(active_key),
+        "client_key_exists": bool(client_key),
+        "keys_match": keys_match,
+        "active_key": formatted_active,
+        "client_key": formatted_client,
+        "settings_key": formatted_active,  # Same as active key
+        "keys_in_storage": len(key_manager._read_keys())
     } 
