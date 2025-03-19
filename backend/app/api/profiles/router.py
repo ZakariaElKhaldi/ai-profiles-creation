@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Body, Query, status
 from typing import List, Optional
 import logging
 
-from ...models.profiles import (
+from backend.app.models.profiles import (
     ProfileCreate,
     ProfileUpdate,
     Profile,
@@ -11,9 +11,9 @@ from ...models.profiles import (
     ProfileWithStats,
     ProfileStats
 )
-from ...services.profiles.profile_service import profile_service
-from ...services.openrouter.client import openrouter_client
-from ...models.openrouter import Message
+from backend.app.services.profiles.profile_service import profile_service
+from backend.app.services.openrouter.client import openrouter_client
+from backend.app.models.openrouter import Message
 
 logger = logging.getLogger(__name__)
 

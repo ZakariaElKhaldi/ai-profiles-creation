@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from fastapi import UploadFile, HTTPException, status
 
-from ...models.documents import (
+from backend.app.models.documents import (
     DocumentCreate,
     DocumentUpdate,
     Document,
@@ -18,7 +18,7 @@ from ...models.documents import (
     DocumentMetadata,
     DocumentList
 )
-from ...core.config import settings
+from backend.app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

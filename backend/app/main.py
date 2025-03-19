@@ -2,10 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from .api.openrouter.router import router as openrouter_router
-from .api.documents.router import router as documents_router
-from .api.profiles.router import router as profiles_router
-from .core.config import settings
+from backend.app.api.openrouter.router import router as openrouter_router
+from backend.app.api.documents.router import router as documents_router
+from backend.app.api.profiles.router import router as profiles_router
+from backend.app.core.config import settings
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -37,4 +37,4 @@ async def health_check():
     return {"status": "ok", "version": settings.VERSION}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True) 

@@ -5,8 +5,8 @@ from datetime import datetime
 import logging
 from pathlib import Path
 
-from ...models.openrouter import APIKeyResponse, APIKeyListResponse
-from ...core.config import settings
+from backend.app.models.openrouter import APIKeyResponse, APIKeyListResponse
+from backend.app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

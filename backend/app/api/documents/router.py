@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, F
 from typing import List, Optional
 import logging
 
-from ...models.documents import (
+from backend.app.models.documents import (
     DocumentCreate,
     DocumentUpdate,
     Document,
@@ -11,7 +11,7 @@ from ...models.documents import (
     DocumentUploadResponse,
     DocumentType
 )
-from ...services.documents.document_service import document_service
+from backend.app.services.documents.document_service import document_service
 
 logger = logging.getLogger(__name__)
 
