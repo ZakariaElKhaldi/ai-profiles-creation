@@ -1,6 +1,5 @@
 from typing import List, Optional, Union
-from pydantic import AnyHttpUrl, Field, validator
-from pydantic_settings import BaseSettings
+from pydantic import AnyHttpUrl, Field, validator, BaseSettings
 import os
 from pathlib import Path
 
@@ -17,7 +16,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = ["http://localhost:3000"]
 
     # Database settings
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_profiles"
+    DATABASE_URL: str = "sqlite+aiosqlite:///backend/data/app.db"  # SQLite in data directory
     
     # OpenRouter settings
     OPENROUTER_API_KEY: str = ""

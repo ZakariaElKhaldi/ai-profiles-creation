@@ -1,0 +1,9 @@
+Metadata-Version: 2.2
+Name: ai-profiles
+Version: 0.1.0
+Summary: AI Profiles Management API
+Author: AI Profiles Team
+Requires-Python: >=3.9
+Dynamic: author
+Dynamic: requires-python
+Dynamic: summary

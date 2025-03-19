@@ -1,0 +1,6 @@
+README.md
+setup.py
+ai_profiles.egg-info/PKG-INFO
+ai_profiles.egg-info/SOURCES.txt
+ai_profiles.egg-info/dependency_links.txt
+ai_profiles.egg-info/top_level.txt

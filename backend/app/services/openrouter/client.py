@@ -54,10 +54,13 @@ class OpenRouterClient:
             
             logger.info(f"Sending completion request to OpenRouter with model: {request.model}")
             
+            # Convert Pydantic model to dict, with compatibility for older Pydantic versions
+            request_dict = {k: v for k, v in request.dict().items() if v is not None}
+            
             response = await client.post(
                 f"{self.base_url}/chat/completions",
                 headers=self.headers,
-                json=request.dict(),
+                json=request_dict,
                 timeout=60.0
             )
             

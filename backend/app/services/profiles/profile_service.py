@@ -133,10 +133,11 @@ class ProfileService:
                 )
         
         # Create profile record
+        profile_data = profile_create.dict()
         profile = ProfileInDB(
             id=str(uuid.uuid4()),
             user_id=user_id,
-            **profile_create.dict(),
+            **profile_data,
             created_at=datetime.now(),
             updated_at=datetime.now(),
             status=ProfileStatus.DRAFT
@@ -161,12 +162,12 @@ class ProfileService:
         for i, profile in enumerate(profiles):
             if profile["id"] == profile_id:
                 # Update profile fields
-                update_data = profile_update.dict(exclude_unset=True)
+                update_data = {k: v for k, v in profile_update.dict().items() 
+                              if v is not None}
                 
                 if update_data:
                     for field, value in update_data.items():
-                        if value is not None:
-                            profile[field] = value
+                        profile[field] = value
                     
                     # Update the updated_at timestamp
                     profile["updated_at"] = datetime.now().isoformat()
