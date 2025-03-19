@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { openRouterService } from '../../services/api';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be less than 50 characters'),
   description: z.string().max(200, 'Description must be less than 200 characters').optional(),
-  aiModel: z.enum(['gpt-4', 'gpt-3.5-turbo', 'claude-3-opus', 'claude-3-sonnet', 'llama-3']),
+  aiModel: z.string().min(1, 'Please select an AI model'),
   contextLength: z.enum(['4k', '8k', '16k', '32k', '128k']),
   temperature: z.number().min(0).max(1),
   isPublic: z.boolean().default(false),
@@ -22,12 +24,18 @@ const CreateProfileForm: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Fetch available models from OpenRouter
+  const { data: modelsData, isLoading: isLoadingModels } = useQuery({
+    queryKey: ['openrouter-models'],
+    queryFn: () => openRouterService.getModels(),
+  });
+
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: '',
       description: '',
-      aiModel: 'gpt-4',
+      aiModel: '',
       contextLength: '16k',
       temperature: 0.7,
       isPublic: false,
@@ -132,15 +140,20 @@ const CreateProfileForm: React.FC = () => {
               id="aiModel"
               {...register('aiModel')}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoadingModels}
             >
-              <option value="gpt-4">GPT-4</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-              <option value="claude-3-opus">Claude 3 Opus</option>
-              <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-              <option value="llama-3">Llama 3</option>
+              <option value="">Select a model</option>
+              {modelsData?.data.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name} {model.top_provider ? `(${model.top_provider})` : ''}
+                </option>
+              ))}
             </select>
             {errors.aiModel && (
               <p className="mt-1 text-sm text-red-400">{errors.aiModel.message}</p>
+            )}
+            {isLoadingModels && (
+              <p className="mt-1 text-sm text-blue-400">Loading available models...</p>
             )}
           </div>
           
@@ -225,7 +238,7 @@ const CreateProfileForm: React.FC = () => {
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isLoadingModels}
             className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md transition duration-200 disabled:opacity-50"
           >
             {isLoading ? 'Creating...' : 'Create Profile'}

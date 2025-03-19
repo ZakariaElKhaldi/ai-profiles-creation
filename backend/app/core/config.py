@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False)
 
     # CORS settings
-    CORS_ORIGINS: str = Field(default="http://localhost:3000")
+    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://localhost:5173")
 
     # Database settings
     DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./backend/data/app.db")  # SQLite for development

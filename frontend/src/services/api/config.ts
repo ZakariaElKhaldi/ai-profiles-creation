@@ -8,6 +8,13 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // Important for CORS with credentials
+});
+
+// Add request interceptor for CORS headers
+api.interceptors.request.use((config) => {
+  config.headers['Access-Control-Allow-Origin'] = window.location.origin;
+  return config;
 });
 
 // Add response interceptor for error handling

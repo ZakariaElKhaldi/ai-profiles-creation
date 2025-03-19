@@ -21,11 +21,46 @@ router = APIRouter()
 async def get_models():
     """Get available models from OpenRouter"""
     try:
-        if not key_manager.get_active_key():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No OpenRouter API key provided. Please add an API key first."
-            )
+        active_key = key_manager.get_active_key()
+        if not active_key:
+            # Return a default list of popular models when no API key is available
+            return ModelsResponse(data=[
+                {
+                    "id": "gpt-4",
+                    "name": "GPT-4",
+                    "description": "Most capable GPT-4 model, great at tasks that require creativity and advanced reasoning",
+                    "context_length": 8192,
+                    "top_provider": "OpenAI"
+                },
+                {
+                    "id": "gpt-3.5-turbo",
+                    "name": "GPT-3.5 Turbo",
+                    "description": "A good balance between performance and cost",
+                    "context_length": 4096,
+                    "top_provider": "OpenAI"
+                },
+                {
+                    "id": "claude-3-opus",
+                    "name": "Claude 3 Opus",
+                    "description": "Most capable Claude model, with improved accuracy and skills across tasks",
+                    "context_length": 200000,
+                    "top_provider": "Anthropic"
+                },
+                {
+                    "id": "claude-3-sonnet",
+                    "name": "Claude 3 Sonnet",
+                    "description": "Balanced performance and speed",
+                    "context_length": 200000,
+                    "top_provider": "Anthropic"
+                },
+                {
+                    "id": "mistral-large",
+                    "name": "Mistral Large",
+                    "description": "Mistral's most capable model",
+                    "context_length": 32768,
+                    "top_provider": "Mistral"
+                }
+            ])
             
         return await openrouter_client.get_models()
     except Exception as e:
