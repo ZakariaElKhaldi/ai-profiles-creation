@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 from pathlib import Path
 
-from backend.app.models.profiles import (
+from app.models.profiles import (
     ProfileCreate,
     ProfileUpdate,
     Profile,
@@ -15,7 +15,7 @@ from backend.app.models.profiles import (
     ProfileStats,
     ProfileWithStats
 )
-from backend.app.core.config import settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

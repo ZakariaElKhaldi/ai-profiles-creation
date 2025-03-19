@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 
@@ -23,62 +23,71 @@ class DocumentType(str, Enum):
 
 class DocumentBase(BaseModel):
     """Base document model with common fields"""
+    model_config = ConfigDict(extra='allow')
+    
     title: str
-    description: Optional[str] = None
+    description: Optional[str] = Field(default=None)
     document_type: DocumentType
     profile_id: str
 
 
 class DocumentCreate(DocumentBase):
     """Model for document creation requests"""
-    pass
+    model_config = ConfigDict(extra='allow')
 
 
 class DocumentUpdate(BaseModel):
     """Model for document update requests"""
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[DocumentStatus] = None
+    model_config = ConfigDict(extra='allow')
+    
+    title: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+    status: Optional[DocumentStatus] = Field(default=None)
 
 
 class DocumentMetadata(BaseModel):
     """Model for document metadata"""
-    page_count: Optional[int] = None
-    word_count: Optional[int] = None
-    author: Optional[str] = None
-    created_date: Optional[datetime] = None
-    modified_date: Optional[datetime] = None
-    size_bytes: Optional[int] = None
-    extracted_entities: Optional[Dict[str, Any]] = None
-    keywords: Optional[List[str]] = None
+    model_config = ConfigDict(extra='allow')
+    
+    page_count: Optional[int] = Field(default=None)
+    word_count: Optional[int] = Field(default=None)
+    author: Optional[str] = Field(default=None)
+    created_date: Optional[datetime] = Field(default=None)
+    modified_date: Optional[datetime] = Field(default=None)
+    size_bytes: Optional[int] = Field(default=None)
+    extracted_entities: Optional[Dict[str, Any]] = Field(default=None)
+    keywords: Optional[List[str]] = Field(default=None)
 
 
 class DocumentInDB(DocumentBase):
     """Model for document in database"""
+    model_config = ConfigDict(extra='allow', from_attributes=True)
+    
     id: str
-    status: DocumentStatus = DocumentStatus.PENDING
+    status: DocumentStatus = Field(default=DocumentStatus.PENDING)
     file_path: str
     upload_date: datetime
-    metadata: Optional[DocumentMetadata] = None
-    processing_error: Optional[str] = None
-    
-    class Config:
-        orm_mode = True
+    metadata: Optional[DocumentMetadata] = Field(default=None)
+    processing_error: Optional[str] = Field(default=None)
 
 
 class Document(DocumentInDB):
     """Full document model for API responses"""
-    pass
+    model_config = ConfigDict(extra='allow', from_attributes=True)
 
 
 class DocumentList(BaseModel):
     """Model for a list of documents"""
+    model_config = ConfigDict(extra='allow')
+    
     total: int
     documents: List[Document]
 
 
 class DocumentUploadResponse(BaseModel):
     """Response model for document upload endpoints"""
+    model_config = ConfigDict(extra='allow')
+    
     document_id: str
-    message: str = "Document uploaded successfully"
+    message: str = Field(default="Document uploaded successfully")
     status: DocumentStatus 

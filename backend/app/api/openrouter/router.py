@@ -2,15 +2,15 @@ from fastapi import APIRouter, HTTPException, Depends, Body, Query, status
 from typing import List, Optional
 import logging
 
-from backend.app.models.openrouter import (
+from app.models.openrouter import (
     CompletionRequest, 
     CompletionResponse, 
     ModelsResponse,
     APIKeyResponse,
     APIKeyListResponse
 )
-from backend.app.services.openrouter.client import openrouter_client
-from backend.app.services.openrouter.key_manager import key_manager
+from app.services.openrouter.client import openrouter_client
+from app.services.openrouter.key_manager import key_manager
 
 logger = logging.getLogger(__name__)
 

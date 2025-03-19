@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from fastapi import UploadFile, HTTPException, status
 
-from backend.app.models.documents import (
+from app.models.documents import (
     DocumentCreate,
     DocumentUpdate,
     Document,
@@ -18,13 +18,23 @@ from backend.app.models.documents import (
     DocumentMetadata,
     DocumentList
 )
-from backend.app.core.config import settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 # Define the path for storing document data
 DOCUMENTS_DIR = Path("backend/data/documents")
 DOCUMENTS_DB = DOCUMENTS_DIR / "documents.json"
+
+
+def model_to_dict(model):
+    """Convert a Pydantic model to dictionary, working with both v1 and v2"""
+    try:
+        # For Pydantic v2
+        return model.model_dump()
+    except AttributeError:
+        # For Pydantic v1
+        return model.dict()
 
 
 class DocumentService:
@@ -97,10 +107,10 @@ class DocumentService:
         """Create a new document record and save the uploaded file"""
         # Validate file type
         file_ext = os.path.splitext(file.filename or "")[1].lower().strip(".")
-        if file_ext not in settings.ALLOWED_EXTENSIONS:
+        if file_ext not in settings.allowed_extensions_list:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported file type: {file_ext}. Allowed types: {settings.ALLOWED_EXTENSIONS}"
+                detail=f"Unsupported file type: {file_ext}. Allowed types: {settings.allowed_extensions_list}"
             )
         
         # Generate document ID and create storage path
@@ -123,9 +133,10 @@ class DocumentService:
             )
         
         # Create document record
+        document_data = document_create.dict()
         document = DocumentInDB(
             id=document_id,
-            **document_create.dict(),
+            **document_data,
             file_path=str(file_path),
             upload_date=datetime.now(),
             status=DocumentStatus.PENDING
@@ -145,7 +156,10 @@ class DocumentService:
         for i, doc in enumerate(documents):
             if doc["id"] == document_id:
                 # Update document fields
-                for field, value in document_update.dict(exclude_unset=True).items():
+                # For Pydantic v1
+                update_data = document_update.dict(exclude_unset=True)
+                
+                for field, value in update_data.items():
                     if value is not None:
                         doc[field] = value
                 

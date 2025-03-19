@@ -4,13 +4,13 @@ from typing import Dict, List, Optional, Any
 import logging
 from datetime import datetime
 
-from backend.app.models.openrouter import (
+from app.models.openrouter import (
     CompletionRequest, 
     CompletionResponse, 
     ModelsResponse,
     Message
 )
-from backend.app.core.config import settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

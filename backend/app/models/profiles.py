@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 import uuid
@@ -26,63 +26,74 @@ class AIModel(str, Enum):
 
 class ProfileBase(BaseModel):
     """Base profile model with common fields"""
+    model_config = ConfigDict(extra='allow')
+    
     name: str
-    description: Optional[str] = None
+    description: Optional[str] = Field(default=None)
     system_prompt: str
-    model: AIModel = AIModel.GPT35
-    temperature: float = Field(0.7, ge=0.0, le=1.0)
-    max_tokens: int = Field(1024, ge=1)
+    model: AIModel = Field(default=AIModel.GPT35)
+    temperature: float = Field(default=0.7, ge=0.0, le=1.0)
+    max_tokens: int = Field(default=1024, ge=1)
 
 
 class ProfileCreate(ProfileBase):
     """Model for profile creation requests"""
-    pass
+    model_config = ConfigDict(extra='allow')
 
 
 class ProfileUpdate(BaseModel):
     """Model for profile update requests"""
-    name: Optional[str] = None
-    description: Optional[str] = None
-    system_prompt: Optional[str] = None
-    model: Optional[AIModel] = None
-    temperature: Optional[float] = Field(None, ge=0.0, le=1.0)
-    max_tokens: Optional[int] = Field(None, ge=1)
-    status: Optional[ProfileStatus] = None
+    model_config = ConfigDict(extra='allow')
+    
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+    system_prompt: Optional[str] = Field(default=None)
+    model: Optional[AIModel] = Field(default=None)
+    temperature: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    max_tokens: Optional[int] = Field(default=None, ge=1)
+    status: Optional[ProfileStatus] = Field(default=None)
 
 
 class ProfileInDB(ProfileBase):
     """Model for profile in database"""
+    model_config = ConfigDict(extra='allow', from_attributes=True)
+    
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: Optional[str] = None
+    user_id: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    status: ProfileStatus = ProfileStatus.DRAFT
+    status: ProfileStatus = Field(default=ProfileStatus.DRAFT)
     document_ids: List[str] = Field(default_factory=list)
-    
-    class Config:
-        orm_mode = True
 
 
 class Profile(ProfileInDB):
     """Full profile model for API responses"""
-    query_count: int = 0
+    model_config = ConfigDict(extra='allow', from_attributes=True)
+    
+    query_count: int = Field(default=0)
 
 
 class ProfileList(BaseModel):
     """Model for a list of profiles"""
+    model_config = ConfigDict(extra='allow')
+    
     total: int
     profiles: List[Profile]
 
 
 class ProfileStats(BaseModel):
     """Model for profile usage statistics"""
-    total_queries: int = 0
-    total_tokens: int = 0
-    average_response_time: float = 0.0
-    documents_count: int = 0
-    last_used: Optional[datetime] = None
+    model_config = ConfigDict(extra='allow')
+    
+    total_queries: int = Field(default=0)
+    total_tokens: int = Field(default=0)
+    average_response_time: float = Field(default=0.0)
+    documents_count: int = Field(default=0)
+    last_used: Optional[datetime] = Field(default=None)
 
 
 class ProfileWithStats(Profile):
     """Profile model with usage statistics"""
+    model_config = ConfigDict(extra='allow', from_attributes=True)
+    
     stats: ProfileStats = Field(default_factory=ProfileStats) 
