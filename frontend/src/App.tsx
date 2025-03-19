@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Layout
 import Layout from './components/Layout/Layout';
@@ -31,7 +32,7 @@ import DocumentDetails from './components/Documents/DocumentDetails';
 import KeyGenerator from './components/Keys/KeyGenerator';
 
 // Settings Components
-import SettingsPage from './components/Settings/SettingsPage';
+import SettingsPage from './components/Settings/SettingsComponent';
 
 // Common Components
 import Toast from './components/Common/Toast';
@@ -156,6 +157,8 @@ const DocumentsRoute = () => {
   );
 };
 
+const queryClient = new QueryClient();
+
 const App: React.FC = () => {
   const [toast, setToast] = useState<{
     message: string;
@@ -168,68 +171,70 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          <Route 
-            path="/dashboard" 
-            element={
-              <div className="space-y-8">
-                <ProfileStats />
-                <ProfileGrid />
-              </div>
-            } 
-          />
-          
-          <Route 
-            path="/profile/create" 
-            element={<CreateProfileForm />} 
-          />
-          
-          <Route 
-            path="/profile/:id" 
-            element={<ProfileRoute />} 
-          />
-          
-          <Route 
-            path="/profile/:id/query" 
-            element={<QueryRoute />} 
-          />
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            
+            <Route 
+              path="/dashboard" 
+              element={
+                <div className="space-y-8">
+                  <ProfileStats />
+                  <ProfileGrid />
+                </div>
+              } 
+            />
+            
+            <Route 
+              path="/profile/create" 
+              element={<CreateProfileForm />} 
+            />
+            
+            <Route 
+              path="/profile/:id" 
+              element={<ProfileRoute />} 
+            />
+            
+            <Route 
+              path="/profile/:id/query" 
+              element={<QueryRoute />} 
+            />
 
-          <Route 
-            path="/profile/:id/documents" 
-            element={<DocumentsRoute />} 
-          />
-          
-          <Route 
-            path="/documents/:documentId" 
-            element={<DocumentDetails onDelete={(id) => {
-              documentService.deleteDocument(id).then(() => {
-                showToast('Document deleted successfully', 'success');
-              }).catch(() => {
-                showToast('Failed to delete document', 'error');
-              });
-            }} />} 
-          />
+            <Route 
+              path="/profile/:id/documents" 
+              element={<DocumentsRoute />} 
+            />
+            
+            <Route 
+              path="/documents/:documentId" 
+              element={<DocumentDetails onDelete={(id) => {
+                documentService.deleteDocument(id).then(() => {
+                  showToast('Document deleted successfully', 'success');
+                }).catch(() => {
+                  showToast('Failed to delete document', 'error');
+                });
+              }} />} 
+            />
 
-          <Route 
-            path="/settings" 
-            element={<SettingsPage />} 
-          />
-        </Routes>
-        
-        {toast && (
-          <Toast 
-            message={toast.message} 
-            type={toast.type} 
-            isVisible={toast.visible} 
-            onClose={() => setToast(null)} 
-          />
-        )}
-      </Layout>
-    </Router>
+            <Route 
+              path="/settings" 
+              element={<SettingsPage />} 
+            />
+          </Routes>
+          
+          {toast && (
+            <Toast 
+              message={toast.message} 
+              type={toast.type} 
+              isVisible={toast.visible} 
+              onClose={() => setToast(null)} 
+            />
+          )}
+        </Layout>
+      </Router>
+    </QueryClientProvider>
   );
 };
 

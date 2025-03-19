@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.models.openrouter import APIKeyResponse, APIKeyListResponse
 from app.core.config import settings
+from app.services.openrouter.client import openrouter_client
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,10 @@ class KeyManager:
             logger.error(f"Error writing keys file: {str(e)}")
             raise
     
+    def _validate_key_format(self, key: str) -> bool:
+        """Validate the API key format"""
+        return key.startswith('sk-or-') or key.startswith('sk-')
+    
     def get_keys(self) -> APIKeyListResponse:
         """Get all stored API keys"""
         keys = self._read_keys()
@@ -54,6 +59,12 @@ class KeyManager:
     
     def add_key(self, key: str) -> APIKeyResponse:
         """Add a new API key"""
+        if not key or not isinstance(key, str):
+            raise ValueError("Invalid API key")
+            
+        if not self._validate_key_format(key):
+            raise ValueError("Invalid API key format. OpenRouter keys should start with 'sk-or-' or 'sk-'")
+            
         keys = self._read_keys()
         
         # Check if key already exists
@@ -69,13 +80,17 @@ class KeyManager:
         keys.append(key_data)
         self._write_keys(keys)
         
-        # Update the active key in settings
+        # Update the active key in settings and client
         settings.OPENROUTER_API_KEY = key
+        openrouter_client.api_key = key
         
         return APIKeyResponse(**key_data)
     
     def delete_key(self, key: str) -> bool:
         """Delete an API key"""
+        if not key:
+            return False
+            
         keys = self._read_keys()
         
         # Find and remove the key
@@ -87,9 +102,10 @@ class KeyManager:
         
         self._write_keys(keys)
         
-        # If this was the active key, update settings
+        # If this was the active key, update settings and client
         if settings.OPENROUTER_API_KEY == key:
             settings.OPENROUTER_API_KEY = ""
+            openrouter_client.api_key = None
         
         return True
     
@@ -99,6 +115,12 @@ class KeyManager:
     
     def set_active_key(self, key: str) -> bool:
         """Set the active API key to use for OpenRouter calls"""
+        if not key:
+            return False
+            
+        if not self._validate_key_format(key):
+            raise ValueError("Invalid API key format. OpenRouter keys should start with 'sk-or-' or 'sk-'")
+            
         keys = self._read_keys()
         
         # Check if key exists
@@ -106,8 +128,10 @@ class KeyManager:
             # Save key if it doesn't exist
             self.add_key(key)
         
-        # Update active key
+        # Update active key in settings and client
         settings.OPENROUTER_API_KEY = key
+        openrouter_client.api_key = key
+        
         return True
 
 

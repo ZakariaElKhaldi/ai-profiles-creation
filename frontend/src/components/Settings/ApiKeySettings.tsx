@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { openRouterService } from '../../services/api/openrouter';
 
 interface ApiKeySettingsProps {
   onSave: (key: string) => void;
@@ -12,13 +13,20 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [showKey, setShowKey] = useState<boolean>(false);
 
-  // Load saved key from localStorage on component mount
+  // Load saved key from backend on component mount
   useEffect(() => {
-    const storedKey = localStorage.getItem('openrouter_api_key');
-    if (storedKey) {
-      setSavedKey(storedKey);
-      setApiKey(storedKey);
-    }
+    const loadActiveKey = async () => {
+      try {
+        const activeKeyInfo = await openRouterService.getActiveKey();
+        if (activeKeyInfo.active && activeKeyInfo.key) {
+          setSavedKey(activeKeyInfo.key);
+          setApiKey(activeKeyInfo.key);
+        }
+      } catch (err) {
+        console.error('Failed to load active key:', err);
+      }
+    };
+    loadActiveKey();
   }, []);
 
   const handleSave = async () => {
@@ -37,12 +45,10 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
     setIsSaving(true);
 
     try {
-      // In a real app, you would validate the key with a test request to OpenRouter
-      // For this example, we'll simulate validation with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Save API key to localStorage
-      localStorage.setItem('openrouter_api_key', apiKey);
+      // Add the key to the backend
+      await openRouterService.addKey(apiKey);
+      // Set it as the active key
+      await openRouterService.setActiveKey(apiKey);
       
       // Update state
       setSavedKey(apiKey);
@@ -50,8 +56,8 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
       
       // Notify parent component
       onSave(apiKey);
-    } catch (err) {
-      setError('Failed to validate API key. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save API key. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -63,10 +69,16 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
     return `${key.substring(0, 4)}${'•'.repeat(Math.max(0, key.length - 8))}${key.substring(key.length - 4)}`;
   };
 
-  const handleClear = () => {
-    localStorage.removeItem('openrouter_api_key');
-    setSavedKey(null);
-    setApiKey('');
+  const handleClear = async () => {
+    try {
+      if (savedKey) {
+        await openRouterService.deleteKey(savedKey);
+        setSavedKey(null);
+        setApiKey('');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to remove API key. Please try again.');
+    }
   };
 
   return (
@@ -76,7 +88,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
       <div className="mb-4">
         <p className="text-gray-300 mb-2">
           {savedKey 
-            ? 'Your OpenRouter API key is saved securely in your browser.'
+            ? 'Your OpenRouter API key is saved securely.'
             : 'Enter your OpenRouter API key to access advanced AI features. Get your key from the OpenRouter dashboard.'}
         </p>
         
@@ -183,7 +195,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onSave }) => {
           <li>Copy and paste the key here</li>
         </ol>
         <p className="mt-3 text-xs text-gray-500">
-          Your API key is stored locally in your browser and is never sent to our servers.
+          Your API key is stored securely on our servers and is never exposed to the client.
           For enhanced security, we recommend using an API key with appropriate rate limits and permissions.
         </p>
       </div>
