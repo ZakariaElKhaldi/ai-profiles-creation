@@ -63,6 +63,33 @@ const ProfileRoute = () => {
 
   const [activeTab, setActiveTab] = useState<string>('uploads');
 
+  // Fetch documents for this profile
+  const { data: documents, isLoading: isLoadingDocuments } = useQuery({
+    queryKey: ['documents', id],
+    queryFn: () => documentService.listDocuments(id),
+    enabled: !!id,
+  });
+
+  // Transform API document type to component document type
+  const transformedDocuments = documents?.documents.map(doc => ({
+    id: doc.id,
+    name: doc.title,
+    fileType: doc.document_type,
+    uploadDate: doc.upload_date,
+    size: doc.metadata?.size_bytes || 0,
+    status: (doc.status === 'completed' ? 'active' : 
+             doc.status === 'failed' ? 'error' : 
+             'processing') as 'active' | 'processing' | 'error',
+    pageCount: doc.metadata?.page_count || 0
+  })) || [];
+
+  const deleteMutation = useMutation({
+    mutationFn: documentService.deleteDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents', id] });
+    },
+  });
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'uploads':
@@ -76,11 +103,16 @@ const ProfileRoute = () => {
             />
             <ProcessingStatus 
               profileId={id!}
-              documentId="doc123"
-              stage="parsing"
-              progress={70}
             />
           </div>
+        );
+      case 'documents':
+        return (
+          <DocumentList 
+            profileId={id!} 
+            documents={transformedDocuments}
+            onDelete={(documentId) => deleteMutation.mutate(documentId)} 
+          />
         );
       case 'keys':
         return (
@@ -106,9 +138,6 @@ const ProfileRoute = () => {
             />
             <ProcessingStatus 
               profileId={id!}
-              documentId="doc123"
-              stage="parsing"
-              progress={70}
             />
           </div>
         );
@@ -133,6 +162,16 @@ const ProfileRoute = () => {
             }`}
           >
             Document Uploads
+          </button>
+          <button
+            onClick={() => setActiveTab('documents')}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'documents'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            My Documents
           </button>
           <button
             onClick={() => setActiveTab('keys')}

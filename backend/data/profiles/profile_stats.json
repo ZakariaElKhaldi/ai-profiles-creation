@@ -27,6 +27,13 @@
       "average_response_time": 0.0,
       "documents_count": 0,
       "last_used": null
+    },
+    "604400ef-2024-4530-8c1b-9d55c093560f": {
+      "total_queries": 0,
+      "total_tokens": 0,
+      "average_response_time": 0.0,
+      "documents_count": 0,
+      "last_used": null
     }
   }
 }

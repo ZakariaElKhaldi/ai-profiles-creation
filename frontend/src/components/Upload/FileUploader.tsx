@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import UploadProgress from './UploadProgress';
+import { documentService } from '../../services/api/documents';
 
 interface FileUploaderProps {
   profileId: string;
@@ -11,6 +12,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,6 +20,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
       const selectedFiles = Array.from(e.target.files);
       setFiles(selectedFiles);
       setError(null);
+      setSuccess(null);
     }
   };
 
@@ -34,10 +37,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
       const selectedFiles = Array.from(e.dataTransfer.files);
       setFiles(selectedFiles);
       setError(null);
+      setSuccess(null);
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (files.length === 0) {
       setError('Please select files to upload');
       return;
@@ -45,28 +49,76 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
 
     setIsUploading(true);
     setUploadProgress(0);
+    setError(null);
+    setSuccess(null);
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        const nextProgress = prev + 10;
-        if (nextProgress >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsUploading(false);
-            setFiles([]);
-            onUploadComplete();
-          }, 500);
-          return 100;
+    try {
+      // Upload files one by one
+      for (const [index, file] of files.entries()) {
+        // Set initial progress based on which file we're processing
+        const baseProgress = (index / files.length) * 100;
+        setUploadProgress(baseProgress);
+
+        // Create file type from extension
+        const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+        let fileType: 'pdf' | 'docx' | 'txt' | 'csv' | 'xlsx' = 'pdf';
+        
+        if (fileExtension === 'pdf') fileType = 'pdf';
+        else if (fileExtension === 'docx') fileType = 'docx';
+        else if (fileExtension === 'txt') fileType = 'txt';
+        else if (fileExtension === 'csv') fileType = 'csv';
+        else if (fileExtension === 'xlsx') fileType = 'xlsx';
+        else {
+          setError(`Unsupported file type: ${fileExtension}`);
+          setIsUploading(false);
+          return;
         }
-        return nextProgress;
-      });
-    }, 500);
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', file.name);
+        formData.append('profile_id', profileId);
+        formData.append('document_type', fileType);
+
+        // Upload the file
+        const response = await documentService.uploadDocument(
+          profileId, 
+          file,
+          file.name,
+          fileType
+        );
+        
+        // Update progress
+        const progressPerFile = 100 / files.length;
+        setUploadProgress(baseProgress + progressPerFile);
+      }
+
+      // All uploads completed
+      setSuccess(`Successfully uploaded ${files.length} file(s)`);
+      setFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      onUploadComplete();
+    } catch (err) {
+      console.error('Error uploading files:', err);
+      setError('Failed to upload one or more files. Please try again.');
+    } finally {
+      setTimeout(() => {
+        setIsUploading(false);
+        // Clear success message after 5 seconds
+        if (success) {
+          setTimeout(() => setSuccess(null), 5000);
+        }
+      }, 500);
+    }
   };
 
   const handleCancel = () => {
     setFiles([]);
     setError(null);
+    setSuccess(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -101,7 +153,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
               className="hidden"
               onChange={handleFileChange}
               ref={fileInputRef}
-              accept=".pdf,.docx,.txt"
+              accept=".pdf,.docx,.txt,.csv,.xlsx"
             />
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -120,10 +172,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({ profileId, onUploadComplete
             <p className="mt-2 text-sm text-gray-400">
               Drag and drop files here, or click to select files
             </p>
-            <p className="mt-1 text-xs text-gray-500">PDF, DOCX, TXT up to 10MB each</p>
+            <p className="mt-1 text-xs text-gray-500">PDF, DOCX, TXT, CSV, XLSX up to 10MB each</p>
           </div>
 
-          {error && <p className="mt-2 text-red-400 text-sm">{error}</p>}
+          {error && (
+            <div className="mt-2 bg-red-900 bg-opacity-30 text-red-300 p-3 rounded-md border border-red-800 text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mt-2 bg-green-900 bg-opacity-30 text-green-300 p-3 rounded-md border border-green-800 text-sm">
+              {success}
+            </div>
+          )}
 
           {files.length > 0 && (
             <div className="mt-4">

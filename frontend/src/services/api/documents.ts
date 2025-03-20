@@ -50,11 +50,15 @@ class DocumentService {
   async uploadDocument(
     profileId: string,
     file: File,
+    title?: string,
+    document_type?: string,
     metadata?: Partial<DocumentMetadata>
   ): Promise<DocumentUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('profile_id', profileId);
+    formData.append('title', title || file.name);
+    formData.append('document_type', document_type || file.type.split('/')[1]);
     if (metadata) {
       formData.append('metadata', JSON.stringify(metadata));
     }

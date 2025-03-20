@@ -19,6 +19,7 @@ from app.models.documents import (
     DocumentList
 )
 from app.core.config import settings
+from app.core.utils import DateTimeEncoder  # Assuming this is imported from app.core.utils
 
 # Import document parsing libraries
 import PyPDF2 as pypdf2
@@ -57,6 +58,9 @@ class DocumentService:
         """Ensure the document directories exist"""
         self.documents_dir.mkdir(parents=True, exist_ok=True)
         
+        # Add this line to create the processed directory
+        (self.documents_dir / "processed").mkdir(parents=True, exist_ok=True)
+        
         if not self.documents_db.exists():
             with open(self.documents_db, "w") as f:
                 json.dump({"documents": []}, f)
@@ -75,7 +79,7 @@ class DocumentService:
         """Write documents to the storage file"""
         try:
             with open(self.documents_db, "w") as f:
-                json.dump({"documents": documents}, f, indent=2)
+                json.dump({"documents": documents}, f, indent=2, cls=DateTimeEncoder)
         except Exception as e:
             logger.error(f"Error writing documents file: {str(e)}")
             raise

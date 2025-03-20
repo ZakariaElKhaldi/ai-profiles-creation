@@ -1,1 +1,25 @@
-{"documents": []}
+{
+  "documents": [
+    {
+      "title": "0a29925ccc5e6299e132a73325956a3abef6dd26.pdf",
+      "description": null,
+      "document_type": "pdf",
+      "profile_id": "604400ef-2024-4530-8c1b-9d55c093560f",
+      "id": "facf9edc-2c35-4689-85da-f0f0e98b4872",
+      "status": "completed",
+      "file_path": "backend\\data\\documents\\facf9edc-2c35-4689-85da-f0f0e98b4872\\document.pdf",
+      "upload_date": "2025-03-20T00:47:45.195259",
+      "metadata": {
+        "page_count": 2,
+        "word_count": 480,
+        "author": null,
+        "created_date": null,
+        "modified_date": null,
+        "size_bytes": 57173,
+        "extracted_entities": null,
+        "keywords": null
+      },
+      "processing_error": null
+    }
+  ]
+}
