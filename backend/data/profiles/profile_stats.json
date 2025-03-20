@@ -6,6 +6,13 @@
       "average_response_time": 0.0,
       "documents_count": 1,
       "last_used": "2025-03-20T01:40:24.120918"
+    },
+    "f7a57868-b383-4dd4-b8eb-fc01bf1f42c6": {
+      "total_queries": 3,
+      "total_tokens": 0,
+      "average_response_time": 0.0,
+      "documents_count": 1,
+      "last_used": "2025-03-20T02:02:37.974154"
     }
   }
 }

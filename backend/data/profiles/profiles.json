@@ -16,6 +16,23 @@
         "f1c0e390-c181-4260-87d4-f827d0fafbcc"
       ],
       "query_count": 7
+    },
+    {
+      "name": "bot2",
+      "description": "a bot",
+      "system_prompt": "\n\nAdditional training context:\nWhen asked about What is the title of document 4277f968-bf13-4882-9f9e-7fae8a580c16?, respond with information similar to: The title is \"0a29925ccc5e6299e132a73325956a3abef6dd26.pdf\".\nWhen asked about How many pages are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document has 2 pages.\nWhen asked about How many words are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document contains approximately 480 words.\nWhen asked about What format is the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf in?, respond with information similar to: The document is in PDF format.",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.7,
+      "max_tokens": 4000,
+      "id": "f7a57868-b383-4dd4-b8eb-fc01bf1f42c6",
+      "user_id": null,
+      "created_at": "2025-03-20T01:45:27.250382",
+      "updated_at": "2025-03-20T02:02:37.974362",
+      "status": "draft",
+      "document_ids": [
+        "4277f968-bf13-4882-9f9e-7fae8a580c16"
+      ],
+      "query_count": 3
     }
   ]
 }
