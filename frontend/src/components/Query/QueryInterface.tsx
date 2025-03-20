@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { documentService, profileService } from '../../services/api';
+import { generateSuggestedQuestions } from '../../services/suggestedQuestions';
 import QueryResults from './QueryResults';
 
 interface QueryInterfaceProps {
@@ -11,6 +14,44 @@ const QueryInterface: React.FC<QueryInterfaceProps> = ({ profileId, profileName 
   const [isQuerying, setIsQuerying] = useState(false);
   const [results, setResults] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+
+  // Fetch the profile's documents
+  const { data: documentsData } = useQuery({
+    queryKey: ['documents', profileId],
+    queryFn: () => documentService.listDocuments(profileId),
+    enabled: !!profileId,
+  });
+
+  // Generate suggested questions from documents
+  useEffect(() => {
+    if (documentsData?.documents && documentsData.documents.length > 0) {
+      // Get completed documents only
+      const completedDocs = documentsData.documents.filter(doc => doc.status === 'completed');
+      
+      if (completedDocs.length > 0) {
+        // Get content from the most recent document
+        const latestDoc = completedDocs.sort((a, b) => 
+          new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
+        )[0];
+        
+        // Fetch document content
+        documentService.getDocumentContent(latestDoc.id)
+          .then(contentData => {
+            // Generate suggested questions
+            const questions = generateSuggestedQuestions(
+              contentData.content,
+              latestDoc.document_type,
+              latestDoc.title
+            );
+            setSuggestedQuestions(questions);
+          })
+          .catch(err => {
+            console.error('Error fetching document content:', err);
+          });
+      }
+    }
+  }, [documentsData]);
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setQuery(e.target.value);
@@ -28,25 +69,35 @@ const QueryInterface: React.FC<QueryInterfaceProps> = ({ profileId, profileName 
     setError(null);
 
     try {
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock response
-      const mockResponses = [
-        "Based on the documents in this profile, the answer to your question is that our return policy allows returns within 30 days of purchase with a receipt. Refunds are processed to the original payment method within 5-7 business days.",
-        "According to our documentation, the API rate limits are 100 requests per minute for the basic tier and 1000 requests per minute for the premium tier. If you exceed these limits, requests will be queued and processed at the allowed rate.",
-        "The product specifications indicate that the device is compatible with iOS 14+ and Android 10+. It requires Bluetooth 5.0 for optimal performance and has a battery life of approximately 8 hours with continuous use.",
-        "Our company's privacy policy states that we collect user data solely for the purpose of improving our services. We do not share personal information with third parties without explicit consent, except as required by law."
-      ];
-      
-      // Select random response from mock data
-      const randomIndex = Math.floor(Math.random() * mockResponses.length);
-      setResults(mockResponses[randomIndex]);
-    } catch (err) {
-      setError('An error occurred while processing your query. Please try again.');
+      // Use the real API to query the profile
+      const response = await profileService.queryProfile(profileId, query);
+      setResults(response.response);
+    } catch (err: any) {
+      console.error('Error querying profile:', err);
+      setError(err.message || 'An error occurred while processing your query. Please try again.');
     } finally {
       setIsQuerying(false);
     }
+  };
+
+  const handleSuggestedQuestionClick = (question: string) => {
+    setQuery(question);
+    // Automatically submit the query
+    setIsQuerying(true);
+    setResults(null);
+    setError(null);
+
+    profileService.queryProfile(profileId, question)
+      .then(response => {
+        setResults(response.response);
+      })
+      .catch(err => {
+        console.error('Error querying profile:', err);
+        setError(err.message || 'An error occurred while processing your query. Please try again.');
+      })
+      .finally(() => {
+        setIsQuerying(false);
+      });
   };
 
   return (
@@ -57,6 +108,23 @@ const QueryInterface: React.FC<QueryInterfaceProps> = ({ profileId, profileName 
           Profile: <span className="text-blue-400">{profileName}</span>
         </span>
       </div>
+
+      {suggestedQuestions.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-gray-300 mb-2">Suggested Questions</h4>
+          <div className="flex flex-wrap gap-2">
+            {suggestedQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => handleSuggestedQuestionClick(question)}
+                className="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded-full hover:bg-gray-600 transition-colors"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mb-4">
         <label htmlFor="query" className="block text-sm font-medium mb-1 text-gray-300">

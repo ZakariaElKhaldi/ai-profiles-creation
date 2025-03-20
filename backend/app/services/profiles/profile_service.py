@@ -296,6 +296,31 @@ class ProfileService:
         # Save updated profile
         return self._update_profile_with_stats(profile)
     
+    def _update_profile_with_stats(self, profile: ProfileWithStats) -> ProfileWithStats:
+        """Update a profile with its statistics in storage"""
+        # Update profile record
+        profiles = self._read_profiles()
+        profile_updated = False
+        
+        for i, p in enumerate(profiles):
+            if p["id"] == profile.id:
+                # Update query count
+                p["query_count"] = profile.query_count
+                p["updated_at"] = datetime.now().isoformat()
+                profiles[i] = p
+                profile_updated = True
+                break
+        
+        if profile_updated:
+            self._write_profiles(profiles)
+        
+        # Update profile stats
+        profile_stats = self._read_profile_stats()
+        profile_stats[profile.id] = profile.stats.dict()
+        self._write_profile_stats(profile_stats)
+        
+        return profile
+    
     def get_api_keys(self, profile_id: Optional[str] = None) -> APIKeyList:
         """Get a list of API keys, optionally filtered by profile"""
         api_keys = self._read_api_keys()

@@ -59,6 +59,7 @@ class ProfileUpdate(BaseModel):
     temperature: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     max_tokens: Optional[int] = Field(default=None, ge=1)
     status: Optional[ProfileStatus] = Field(default=None)
+    document_ids: Optional[List[str]] = Field(default=None)
 
 
 class ProfileInDB(ProfileBase):

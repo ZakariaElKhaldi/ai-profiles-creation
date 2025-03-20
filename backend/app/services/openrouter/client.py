@@ -28,19 +28,20 @@ class OpenRouterClient:
     
     def _get_headers(self) -> Dict[str, str]:
         """Get headers with current API key"""
-        if not self.api_key:
+        # First check instance attribute
+        api_key = self.api_key
+        
+        # Then fall back to settings
+        if not api_key:
+            logger.warning("No API key found in instance, falling back to settings")
+            api_key = settings.OPENROUTER_API_KEY
+        
+        if not api_key:
             logger.error("No API key available for OpenRouter request")
             raise ValueError("No API key provided")
         
-        # Always use the latest key from settings
-        api_key = self.api_key or settings.OPENROUTER_API_KEY
-        
-        if not api_key:
-            logger.error("No API key found in client or settings")
-            raise ValueError("No API key available")
-            
         # Log the key being used (safely)
-        logger.debug(f"Using OpenRouter API key: {api_key[:4]}...{api_key[-4:]}")
+        logger.info(f"Using OpenRouter API key in headers: {api_key[:4]}...{api_key[-4:]}")
             
         return {
             "Authorization": f"Bearer {api_key}",
@@ -91,22 +92,21 @@ class OpenRouterClient:
     async def create_completion(self, request: CompletionRequest) -> CompletionResponse:
         """Create a chat completion using OpenRouter"""
         try:
+            # Ensure we have headers with valid API key
             headers = self._get_headers()
-            logger.debug(f"API key in use: {self.api_key[:4]}...{self.api_key[-4:] if self.api_key else 'None'}")
+            logger.info(f"Creating completion with model: {request.model}")
                 
             async with httpx.AsyncClient(timeout=60.0) as client:
                 start_time = datetime.now()
-                
-                logger.info(f"Sending completion request to OpenRouter with model: {request.model}")
                 
                 # Convert Pydantic model to dict
                 request_dict = request.dict(exclude_none=True)
                 
                 # Log request details for debugging (without sensitive info)
                 logger.debug(f"Request URL: {self.base_url}/chat/completions")
-                logger.debug(f"Request headers (Auth redacted): {json.dumps({k: v if k != 'Authorization' else '[REDACTED]' for k, v in headers.items()})}")
-                logger.debug(f"Request body: {json.dumps(request_dict)}")
                 
+                # Make the API call
+                logger.info(f"Sending request to OpenRouter API")
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
                     headers=headers,
@@ -123,10 +123,10 @@ class OpenRouterClient:
                 
                 if response.status_code != 200:
                     error_text = response.text
-                    logger.error(f"OpenRouter API error: {error_text}")
+                    logger.error(f"OpenRouter API error (status {response.status_code}): {error_text}")
                     raise httpx.HTTPError(f"OpenRouter API error: {error_text}")
                 
-                logger.info(f"Received response in {duration:.2f}s")
+                logger.info(f"Received successful response from OpenRouter in {duration:.2f}s")
                 
                 return CompletionResponse(**response.json())
         except httpx.RequestError as e:

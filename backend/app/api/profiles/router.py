@@ -16,7 +16,9 @@ from app.models.profiles import (
 )
 from app.services.profiles.profile_service import profile_service
 from app.services.openrouter.client import openrouter_client
+from app.services.openrouter.key_manager import key_manager
 from app.models.openrouter import Message
+from app.services.documents.document_service import document_service
 
 logger = logging.getLogger(__name__)
 
@@ -143,24 +145,74 @@ async def query_profile(
         )
     
     try:
+        # Get the active OpenRouter API key
+        active_key = key_manager.get_active_key()
+        
+        if not active_key:
+            # If no key is active, check if there are any keys in storage
+            keys = key_manager._read_keys()
+            if keys:
+                logger.info("No active key found, trying to use first stored key")
+                active_key = keys[0]["key"]
+                key_manager.set_active_key(active_key)
+            else:
+                logger.error("No OpenRouter API keys available in system")
+                raise ValueError("No API key provided. Please add an OpenRouter API key in Settings.")
+        
+        # Make sure the client has the latest key
+        logger.info(f"Setting API key for openrouter_client: {active_key[:4]}...{active_key[-4:]}")
+        openrouter_client.api_key = active_key
+        
+        # Fetch document content for this profile
+        document_content = ""
+        
+        if profile.document_ids:
+            logger.info(f"Profile has {len(profile.document_ids)} documents, fetching content...")
+            
+            # Get completed documents
+            for doc_id in profile.document_ids:
+                doc = document_service.get_document(doc_id)
+                if doc and doc.status == "completed":
+                    try:
+                        # Get document content
+                        processed_dir = document_service.PROCESSED_DIR / doc_id
+                        text_file_path = processed_dir / "extracted_text.txt"
+                        
+                        if text_file_path.exists():
+                            with open(text_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                doc_text = f.read()
+                                # Add document content to the context
+                                document_content += f"\n\n--- Document: {doc.title} ---\n{doc_text[:5000]}\n"
+                    except Exception as e:
+                        logger.warning(f"Error reading document {doc_id}: {str(e)}")
+        
         # Prepare messages
         messages = [
             {"role": "system", "content": profile.system_prompt}
         ]
         
-        # Add context if provided
+        # Create a combined context with both document content and user context
+        combined_context = ""
+        if document_content:
+            combined_context += f"Document content for reference:\n{document_content}\n\n"
+        
         if context:
-            messages.append({"role": "user", "content": f"Context information: {context}"})
+            combined_context += f"Additional context: {context}\n\n"
+        
+        if combined_context:
+            messages.append({"role": "user", "content": combined_context})
         
         # Add the user query
         messages.append({"role": "user", "content": query})
         
         # Send to OpenRouter
+        logger.info(f"Sending query to OpenRouter with model: {profile.model.value}")
         response = await openrouter_client.simple_completion(
             model=profile.model.value,
             messages=messages,
             temperature=profile.temperature
         )
+        logger.info("Successfully received response from OpenRouter")
         
         # Update profile stats (in a real app, this would include token counts)
         profile_service.update_profile_stats(profile_id, add_query=True)
@@ -170,6 +222,12 @@ async def query_profile(
             "profile_id": profile_id,
             "model": profile.model.value
         }
+    except ValueError as ve:
+        logger.error(f"Value Error in query_profile: {str(ve)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to query profile: {str(ve)}"
+        )
     except Exception as e:
         logger.error(f"Error querying profile: {str(e)}")
         raise HTTPException(
@@ -316,24 +374,74 @@ async def external_query_profile(
         )
     
     try:
+        # Get the active OpenRouter API key
+        active_key = key_manager.get_active_key()
+        
+        if not active_key:
+            # If no key is active, check if there are any keys in storage
+            keys = key_manager._read_keys()
+            if keys:
+                logger.info("No active key found, trying to use first stored key")
+                active_key = keys[0]["key"]
+                key_manager.set_active_key(active_key)
+            else:
+                logger.error("No OpenRouter API keys available in system")
+                raise ValueError("No API key provided. Please add an OpenRouter API key in Settings.")
+        
+        # Make sure the client has the latest key
+        logger.info(f"Setting API key for openrouter_client: {active_key[:4]}...{active_key[-4:]}")
+        openrouter_client.api_key = active_key
+        
+        # Fetch document content for this profile
+        document_content = ""
+        
+        if profile.document_ids:
+            logger.info(f"Profile has {len(profile.document_ids)} documents, fetching content...")
+            
+            # Get completed documents
+            for doc_id in profile.document_ids:
+                doc = document_service.get_document(doc_id)
+                if doc and doc.status == "completed":
+                    try:
+                        # Get document content
+                        processed_dir = document_service.PROCESSED_DIR / doc_id
+                        text_file_path = processed_dir / "extracted_text.txt"
+                        
+                        if text_file_path.exists():
+                            with open(text_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                doc_text = f.read()
+                                # Add document content to the context
+                                document_content += f"\n\n--- Document: {doc.title} ---\n{doc_text[:5000]}\n"
+                    except Exception as e:
+                        logger.warning(f"Error reading document {doc_id}: {str(e)}")
+        
         # Prepare messages
         messages = [
             {"role": "system", "content": profile.system_prompt}
         ]
         
-        # Add context if provided
+        # Create a combined context with both document content and user context
+        combined_context = ""
+        if document_content:
+            combined_context += f"Document content for reference:\n{document_content}\n\n"
+        
         if context:
-            messages.append({"role": "user", "content": f"Context information: {context}"})
+            combined_context += f"Additional context: {context}\n\n"
+        
+        if combined_context:
+            messages.append({"role": "user", "content": combined_context})
         
         # Add the user query
         messages.append({"role": "user", "content": query})
         
         # Send to OpenRouter
+        logger.info(f"Sending query to OpenRouter with model: {profile.model.value}")
         response = await openrouter_client.simple_completion(
             model=profile.model.value,
             messages=messages,
             temperature=profile.temperature
         )
+        logger.info("Successfully received response from OpenRouter")
         
         # Update profile stats
         profile_service.update_profile_stats(profile_id, add_query=True)
@@ -343,6 +451,12 @@ async def external_query_profile(
             "profile_id": profile_id,
             "model": profile.model.value
         }
+    except ValueError as ve:
+        logger.error(f"Value Error in external_query_profile: {str(ve)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to query profile: {str(ve)}"
+        )
     except Exception as e:
         logger.error(f"Error querying profile: {str(e)}")
         raise HTTPException(

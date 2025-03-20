@@ -170,6 +170,19 @@ async def set_active_key(key: str = Body(..., embed=True)):
     """Set the active OpenRouter API key"""
     try:
         if key_manager.set_active_key(key):
+            # Also ensure the client instance has the key set
+            openrouter_client.api_key = key
+            logger.info(f"Set active API key and updated openrouter_client: {key[:4]}...{key[-4:]}")
+            
+            # Test the key to make sure it works
+            try:
+                logger.info("Testing API key with a simple request...")
+                await openrouter_client.get_models()
+                logger.info("API key test passed!")
+            except Exception as e:
+                logger.warning(f"API key test warning: {str(e)}")
+                # We don't fail here, just log the warning
+            
             return {"message": "Active API key set successfully"}
         else:
             raise HTTPException(

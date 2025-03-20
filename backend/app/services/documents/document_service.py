@@ -49,6 +49,11 @@ def model_to_dict(model):
 class DocumentService:
     """Service for document management operations"""
     
+    # Make constants accessible to other modules
+    DOCUMENTS_DIR = DOCUMENTS_DIR
+    DOCUMENTS_DB = DOCUMENTS_DB
+    PROCESSED_DIR = PROCESSED_DIR
+    
     def __init__(self, documents_dir: Optional[Path] = None, documents_db: Optional[Path] = None):
         self.documents_dir = documents_dir or DOCUMENTS_DIR
         self.documents_db = documents_db or DOCUMENTS_DB
@@ -238,28 +243,63 @@ class DocumentService:
                 metadata.size_bytes = file_path.stat().st_size
                 # Add CSV specific metadata
                 metadata.page_count = 1
-                metadata.word_count = len(extracted_text.split())
             
             elif document.document_type == DocumentType.XLSX:
                 # Process XLSX
-                df = pd.read_excel(file_path, sheet_name=None)
-                texts = []
-                for sheet_name, sheet_df in df.items():
-                    texts.append(f"Sheet: {sheet_name}\n{sheet_df.to_string()}")
-                extracted_text = "\n\n".join(texts)
+                # Read all sheets
+                text_parts = []
+                with pd.ExcelFile(file_path) as xls:
+                    for sheet_name in xls.sheet_names:
+                        df = pd.read_excel(xls, sheet_name)
+                        text_parts.append(f"Sheet: {sheet_name}\n" + df.to_string())
+                
+                extracted_text = "\n\n".join(text_parts)
                 metadata.size_bytes = file_path.stat().st_size
-                metadata.page_count = len(df)
-                metadata.word_count = len(extracted_text.split())
+                metadata.page_count = len(text_parts)  # Count sheets as pages
             
-            # Save extracted text to file
+            # Save extracted text
             with open(processed_text_path, 'w', encoding='utf-8') as f:
                 f.write(extracted_text)
             
-            # Update document with metadata
+            # Save metadata
+            with open(processed_metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(model_to_dict(metadata), f, indent=2, cls=DateTimeEncoder)
+            
+            # Update document metadata
             updated_doc = self.update_document_metadata(document_id, metadata)
+            
             if updated_doc:
                 # Mark document as completed
-                return self.update_document_status(document_id, DocumentStatus.COMPLETED)
+                updated_doc = self.update_document_status(document_id, DocumentStatus.COMPLETED)
+                
+                # Import profile service here to avoid circular imports
+                from app.services.profiles.profile_service import profile_service
+                
+                # Add document ID to profile's document_ids array
+                if updated_doc and updated_doc.profile_id:
+                    try:
+                        # Get the profile
+                        profile = profile_service.get_profile(updated_doc.profile_id)
+                        if profile:
+                            # Check if document ID already exists in profile's document_ids
+                            if document_id not in profile.document_ids:
+                                # Create a ProfileUpdate with the updated document_ids
+                                from app.models.profiles import ProfileUpdate
+                                
+                                # Create a new list with the document ID added
+                                updated_document_ids = list(profile.document_ids)
+                                updated_document_ids.append(document_id)
+                                
+                                # Create a profile update object
+                                profile_update = ProfileUpdate(document_ids=updated_document_ids)
+                                
+                                # Update the profile
+                                profile_service.update_profile(profile.id, profile_update)
+                                logger.info(f"Added document {document_id} to profile {profile.id}")
+                    except Exception as e:
+                        logger.error(f"Error updating profile with document ID: {str(e)}")
+                
+                return updated_doc
             
             return None
             

@@ -35,6 +35,10 @@ export interface DocumentUploadResponse {
   status: Document['status'];
 }
 
+export interface DocumentContent {
+  content: string;
+}
+
 class DocumentService {
   async listDocuments(profileId?: string): Promise<DocumentList> {
     const params = profileId ? { profile_id: profileId } : {};
@@ -44,6 +48,11 @@ class DocumentService {
 
   async getDocument(id: string): Promise<Document> {
     const response = await api.get(`/documents/${id}`);
+    return response.data;
+  }
+
+  async getDocumentContent(id: string): Promise<DocumentContent> {
+    const response = await api.get(`/documents/${id}/content`);
     return response.data;
   }
 

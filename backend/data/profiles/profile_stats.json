@@ -1,11 +1,11 @@
 {
   "profile_stats": {
     "a2fbbd28-dbec-4cfb-8fba-382fd124d290": {
-      "total_queries": 0,
+      "total_queries": 9,
       "total_tokens": 0,
       "average_response_time": 0.0,
-      "documents_count": 0,
-      "last_used": null
+      "documents_count": 1,
+      "last_used": "2025-03-20T01:40:24.120918"
     }
   }
 }

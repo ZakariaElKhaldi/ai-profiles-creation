@@ -78,6 +78,17 @@ export interface TrainingData {
   output: string;
 }
 
+export interface QueryRequest {
+  query: string;
+  context?: string;
+}
+
+export interface QueryResponse {
+  response: string;
+  profile_id: string;
+  model: string;
+}
+
 class ProfileService {
   async listProfiles(): Promise<ProfileList> {
     const response = await api.get('/profiles');
@@ -147,6 +158,15 @@ class ProfileService {
       { query, context }, 
       { headers: { 'api-key': apiKey } }
     );
+    return response.data;
+  }
+
+  // Query a profile
+  async queryProfile(profileId: string, query: string, context?: string): Promise<QueryResponse> {
+    const response = await api.post(`/profiles/${profileId}/query`, {
+      query,
+      context
+    });
     return response.data;
   }
 }

@@ -3,16 +3,19 @@
     {
       "name": "bot1",
       "description": "bot",
-      "system_prompt": "\n\nAdditional training context:\nWhen asked about What is the title of document f1c0e390-c181-4260-87d4-f827d0fafbcc?, respond with information similar to: The title is \"0a29925ccc5e6299e132a73325956a3abef6dd26.pdf\".\nWhen asked about How many pages are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document has 2 pages.\nWhen asked about How many words are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document contains approximately 480 words.\nWhen asked about What format is the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf in?, respond with information similar to: The document is in PDF format.",
+      "system_prompt": "\n\nAdditional training context:\nWhen asked about What is the title of document f1c0e390-c181-4260-87d4-f827d0fafbcc?, respond with information similar to: The title is \"0a29925ccc5e6299e132a73325956a3abef6dd26.pdf\".\nWhen asked about How many pages are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document has 2 pages.\nWhen asked about How many words are in the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf?, respond with information similar to: The document contains approximately 480 words.\nWhen asked about What format is the document 0a29925ccc5e6299e132a73325956a3abef6dd26.pdf in?, respond with information similar to: The document is in PDF format.\n\nAdditional training context:\nWhen asked about hi, respond with information similar to: hi sir",
       "model": "gpt-3.5-turbo",
       "temperature": 0.7,
       "max_tokens": 4000,
       "id": "a2fbbd28-dbec-4cfb-8fba-382fd124d290",
       "user_id": null,
       "created_at": "2025-03-20T01:04:00.603878",
-      "updated_at": "2025-03-20T01:04:46.614134",
+      "updated_at": "2025-03-20T01:40:24.121266",
       "status": "draft",
-      "document_ids": []
+      "document_ids": [
+        "f1c0e390-c181-4260-87d4-f827d0fafbcc"
+      ],
+      "query_count": 7
     }
   ]
 }

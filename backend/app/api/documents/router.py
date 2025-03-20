@@ -124,4 +124,113 @@ async def update_document_status(
             detail=f"Document with ID {document_id} not found"
         )
     
-    return updated_document 
+    return updated_document
+
+
+@router.get("/{document_id}/content")
+async def get_document_content(document_id: str):
+    """Get the extracted text content of a document"""
+    # Get the document
+    document = document_service.get_document(document_id)
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document with ID {document_id} not found"
+        )
+    
+    try:
+        # Construct the path to the extracted text file
+        processed_dir = document_service.PROCESSED_DIR / document_id
+        text_file_path = processed_dir / "extracted_text.txt"
+        
+        # Check if the file exists
+        if not text_file_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Content for document with ID {document_id} not found"
+            )
+        
+        # Read the file content
+        with open(text_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        return {"content": content}
+    except Exception as e:
+        logger.error(f"Error reading document content: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to read document content: {str(e)}"
+        )
+
+
+@router.post("/sync-with-profiles")
+async def sync_documents_with_profiles():
+    """Maintenance endpoint to ensure all document IDs are in their corresponding profiles' document_ids arrays"""
+    try:
+        from app.services.profiles.profile_service import profile_service
+        from app.models.profiles import ProfileUpdate
+        
+        # Get all documents
+        document_list = document_service.get_documents()
+        documents = document_list.documents
+        
+        # Track results
+        updated_profiles = set()
+        skipped_documents = []
+        failed_updates = []
+        
+        # Process only completed documents
+        for document in documents:
+            if document.status != DocumentStatus.COMPLETED:
+                skipped_documents.append(f"{document.id} (status: {document.status})")
+                continue
+                
+            if not document.profile_id:
+                skipped_documents.append(f"{document.id} (no profile_id)")
+                continue
+                
+            try:
+                # Get the profile
+                profile = profile_service.get_profile(document.profile_id)
+                if not profile:
+                    skipped_documents.append(f"{document.id} (profile not found: {document.profile_id})")
+                    continue
+                    
+                # Check if document ID already exists in profile's document_ids
+                if document.id in profile.document_ids:
+                    skipped_documents.append(f"{document.id} (already in profile)")
+                    continue
+                    
+                # Create a new list with the document ID added
+                updated_document_ids = list(profile.document_ids)
+                updated_document_ids.append(document.id)
+                
+                # Create a profile update object
+                profile_update = ProfileUpdate(document_ids=updated_document_ids)
+                
+                # Update the profile
+                profile_service.update_profile(profile.id, profile_update)
+                updated_profiles.add(profile.id)
+                logger.info(f"Added document {document.id} to profile {profile.id}")
+                
+            except Exception as e:
+                error_msg = f"Error updating profile {document.profile_id} with document {document.id}: {str(e)}"
+                logger.error(error_msg)
+                failed_updates.append(error_msg)
+        
+        return {
+            "success": True,
+            "updated_profiles_count": len(updated_profiles),
+            "updated_profiles": list(updated_profiles),
+            "skipped_documents_count": len(skipped_documents),
+            "skipped_documents": skipped_documents,
+            "failed_updates_count": len(failed_updates),
+            "failed_updates": failed_updates
+        }
+        
+    except Exception as e:
+        logger.error(f"Error syncing documents with profiles: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync documents with profiles: {str(e)}"
+        ) 
