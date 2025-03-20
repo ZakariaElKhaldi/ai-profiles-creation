@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ProfileCard from './ProfileCard';
 import { useNavigate } from 'react-router-dom';
+import { profileService, documentService } from '../../services/api';
+import { useQuery } from '@tanstack/react-query';
 
 export interface Profile {
   id: string;
@@ -17,71 +19,100 @@ export interface Profile {
 }
 
 const ProfileGrid: React.FC = () => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const navigate = useNavigate();
 
-  // Load profiles from localStorage on component mount
-  useEffect(() => {
-    const storedProfiles = localStorage.getItem('aiProfiles');
+  // Fetch profiles from API
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const response = await profileService.listProfiles();
+      return response.profiles;
+    },
+  });
+
+  // Fetch all documents once to count them
+  const { data: documentsData } = useQuery({
+    queryKey: ['all-documents'],
+    queryFn: async () => {
+      const response = await documentService.listDocuments();
+      return response.documents;
+    },
+    enabled: !!data, // only fetch documents after profiles are loaded
+  });
+
+  // Transform API profiles to UI format
+  const transformedProfiles: Profile[] = data?.map(profile => {
+    // Count documents for this profile
+    const profileDocuments = documentsData?.filter(doc => doc.profile_id === profile.id) || [];
     
-    if (storedProfiles) {
-      try {
-        const parsedProfiles = JSON.parse(storedProfiles);
-        setProfiles(parsedProfiles);
-      } catch (error) {
-        console.error('Error parsing profiles from localStorage:', error);
-        // If there's an error, initialize with sample data
-        initializeWithSampleData();
-      }
-    } else {
-      // If no profiles in localStorage, initialize with sample data
-      initializeWithSampleData();
+    return {
+      id: profile.id,
+      name: profile.name,
+      createdAt: profile.created_at,
+      documentCount: profileDocuments.length,
+      hasApiKey: false, // TODO: This should be updated with real API key status
+      description: profile.description,
+      aiModel: profile.model,
+      contextLength: profile.max_tokens.toString(),
+      temperature: profile.temperature,
+    };
+  }) || [];
+
+  const handleDeleteProfile = async (id: string) => {
+    try {
+      await profileService.deleteProfile(id);
+      // Refresh profiles
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting profile:', error);
     }
-  }, []);
-
-  // Initialize with sample data if no profiles exist
-  const initializeWithSampleData = () => {
-    const sampleProfiles = [
-      {
-        id: '1',
-        name: 'Customer Support Bot',
-        createdAt: '2023-10-15',
-        documentCount: 3,
-        lastQueried: '2023-10-20',
-        hasApiKey: true,
-        aiModel: 'gpt-4',
-        description: 'Handles customer support queries about our products and services'
-      },
-      {
-        id: '2',
-        name: 'Product Documentation',
-        createdAt: '2023-09-22',
-        documentCount: 5,
-        lastQueried: '2023-10-19',
-        hasApiKey: true,
-        aiModel: 'claude-3-opus',
-        description: 'Contains all product documentation and user guides'
-      },
-      {
-        id: '3',
-        name: 'Marketing Materials',
-        createdAt: '2023-10-05',
-        documentCount: 2,
-        hasApiKey: false,
-        aiModel: 'gpt-3.5-turbo',
-        description: 'Repository of marketing content and brand guidelines'
-      }
-    ];
-    
-    setProfiles(sampleProfiles);
-    localStorage.setItem('aiProfiles', JSON.stringify(sampleProfiles));
   };
 
-  const handleDeleteProfile = (id: string) => {
-    const updatedProfiles = profiles.filter(profile => profile.id !== id);
-    setProfiles(updatedProfiles);
-    localStorage.setItem('aiProfiles', JSON.stringify(updatedProfiles));
-  };
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Your AI Profiles</h2>
+          <button 
+            onClick={() => navigate('/profile/create')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            + Create New Profile
+          </button>
+        </div>
+        <div className="text-center py-10 bg-gray-800 rounded-lg border border-gray-700">
+          <div className="flex justify-center items-center space-x-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse delay-100"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse delay-200"></div>
+          </div>
+          <p className="text-gray-400 mt-2">Loading profiles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Your AI Profiles</h2>
+          <button 
+            onClick={() => navigate('/profile/create')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            + Create New Profile
+          </button>
+        </div>
+        <div className="text-center py-10 bg-gray-800 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-medium text-red-400">Error loading profiles</h3>
+          <p className="text-gray-400 mt-2">Please try again later</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -95,7 +126,7 @@ const ProfileGrid: React.FC = () => {
         </button>
       </div>
 
-      {profiles.length === 0 ? (
+      {transformedProfiles.length === 0 ? (
         <div className="text-center py-10 bg-gray-800 rounded-lg border border-gray-700">
           <h3 className="text-lg font-medium text-gray-300">No profiles yet</h3>
           <p className="text-gray-400 mt-2">Create your first AI profile to get started</p>
@@ -108,7 +139,7 @@ const ProfileGrid: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {profiles.map(profile => (
+          {transformedProfiles.map(profile => (
             <ProfileCard 
               key={profile.id} 
               profile={profile} 

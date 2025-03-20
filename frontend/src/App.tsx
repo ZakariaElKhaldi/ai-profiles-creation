@@ -15,6 +15,7 @@ import ProfileStats from './components/Dashboard/ProfileStats';
 
 // Profile Components
 import CreateProfileForm from './components/Profile/CreateProfileForm';
+import ProfileDetails from './components/Profile/ProfileDetails';
 
 // Query Components
 import QueryInterface from './components/Query/QueryInterface';
@@ -61,7 +62,7 @@ const ProfileRoute = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<string>('uploads');
+  const [activeTab, setActiveTab] = useState<string>('details');
 
   // Fetch documents for this profile
   const { data: documents, isLoading: isLoadingDocuments } = useQuery({
@@ -92,6 +93,10 @@ const ProfileRoute = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'details':
+        return (
+          <ProfileDetails profileId={id!} />
+        );
       case 'uploads':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -129,17 +134,7 @@ const ProfileRoute = () => {
         );
       default:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <FileUploader 
-              profileId={id!} 
-              onUploadComplete={() => {
-                queryClient.invalidateQueries({ queryKey: ['documents', id] });
-              }} 
-            />
-            <ProcessingStatus 
-              profileId={id!}
-            />
-          </div>
+          <ProfileDetails profileId={id!} />
         );
     }
   };
@@ -153,6 +148,16 @@ const ProfileRoute = () => {
       {/* Tabs Navigation */}
       <div className="border-b border-gray-700">
         <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'details'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            Profile Details
+          </button>
           <button
             onClick={() => setActiveTab('uploads')}
             className={`pb-4 px-1 border-b-2 font-medium text-sm ${

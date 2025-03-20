@@ -20,6 +20,27 @@
         "keywords": null
       },
       "processing_error": null
+    },
+    {
+      "title": "0a29925ccc5e6299e132a73325956a3abef6dd26.pdf",
+      "description": null,
+      "document_type": "pdf",
+      "profile_id": "a2fbbd28-dbec-4cfb-8fba-382fd124d290",
+      "id": "f1c0e390-c181-4260-87d4-f827d0fafbcc",
+      "status": "completed",
+      "file_path": "backend\\data\\documents\\f1c0e390-c181-4260-87d4-f827d0fafbcc\\document.pdf",
+      "upload_date": "2025-03-20T01:04:21.242982",
+      "metadata": {
+        "page_count": 2,
+        "word_count": 480,
+        "author": null,
+        "created_date": null,
+        "modified_date": null,
+        "size_bytes": 57173,
+        "extracted_entities": null,
+        "keywords": null
+      },
+      "processing_error": null
     }
   ]
 }

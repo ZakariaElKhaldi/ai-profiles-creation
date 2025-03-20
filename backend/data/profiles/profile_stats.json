@@ -1,34 +1,6 @@
 {
   "profile_stats": {
-    "cee3c885-cad6-4891-a4ed-1098680be2a2": {
-      "total_queries": 0,
-      "total_tokens": 0,
-      "average_response_time": 0.0,
-      "documents_count": 0,
-      "last_used": null
-    },
-    "7878ba36-88f7-4315-9fb8-7d0cb3ada866": {
-      "total_queries": 0,
-      "total_tokens": 0,
-      "average_response_time": 0.0,
-      "documents_count": 0,
-      "last_used": null
-    },
-    "65e31e82-c56f-46d4-a1dc-09144954f3a7": {
-      "total_queries": 0,
-      "total_tokens": 0,
-      "average_response_time": 0.0,
-      "documents_count": 0,
-      "last_used": null
-    },
-    "6925fbe1-be37-4aee-aca7-52f385e2c81d": {
-      "total_queries": 0,
-      "total_tokens": 0,
-      "average_response_time": 0.0,
-      "documents_count": 0,
-      "last_used": null
-    },
-    "604400ef-2024-4530-8c1b-9d55c093560f": {
+    "a2fbbd28-dbec-4cfb-8fba-382fd124d290": {
       "total_queries": 0,
       "total_tokens": 0,
       "average_response_time": 0.0,
