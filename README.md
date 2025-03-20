@@ -1,80 +1,102 @@
-# AI Profiles Application
+# AI Profiles
 
-A web application for creating, managing, and using AI profiles with custom system prompts. Connects to OpenRouter API for accessing various AI models.
+AI Profiles is a complete solution for creating and managing AI-powered profiles that can respond to queries based on uploaded documents and customized configurations.
 
-## Project Structure
+## Overview
 
-```
-/
-├── backend/             # FastAPI backend
-│   ├── app/             # Application code
-│   ├── data/            # Data storage
-│   └── requirements.txt # Backend dependencies
-├── frontend/            # React frontend (separate repo)
-├── run.py               # Convenience script to run the backend
-└── setup.py             # Development setup
-```
+AI Profiles allows you to:
 
-## Getting Started
+- Create AI representations of individuals, companies, products, or knowledge domains
+- Upload various document types (PDF, DOCX, TXT, etc.) to provide knowledge to your profiles
+- Query profiles through a web interface or API to get AI-generated responses
+- Configure AI behavior through system prompts and model settings
+- Enable external application access via API keys
 
-### Prerequisites
+## Features
 
-- Python 3.9 or higher
-- pip (Python package installer)
+- **Profile Management**: Create, edit, and organize AI profiles
+- **Document Processing**: Upload, process, and extract text from various document formats
+- **Interactive Querying**: Chat with your profiles in a conversational interface
+- **API Access**: Full API for programmatic access and integration
+- **External Access**: Secure API keys for third-party application integration
+- **Customizable AI Behavior**: Configure system prompts and model parameters
 
-### Backend Setup
+## Quick Start
 
-1. Create a virtual environment:
+### Using Docker (Recommended)
+
+1. Clone the repository:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   git clone https://github.com/your-org/ai-profiles.git
+   cd ai-profiles
    ```
 
-2. Install backend dependencies:
-   ```bash
-   pip install -r backend/requirements.txt
+2. Create a `.env` file:
    ```
-
-3. Install the package in development mode:
-   ```bash
-   pip install -e .
-   ```
-
-4. Create or update the `.env` file in the backend directory:
-   ```
-   # OpenRouter settings - add your key here
-   OPENROUTER_API_KEY=your_api_key_here
+   # Database
+   DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_profiles
    
-   # Basic app settings
-   DEBUG=True
-   CORS_ORIGINS=http://localhost:3000
+   # API Keys
+   OPENROUTER_API_KEY=your_openrouter_api_key
+   
+   # Storage paths
+   UPLOAD_DIR=./data/uploads
+   PROCESSED_DIR=./data/processed
    ```
 
-### Running the Backend
+3. Start the application:
+   ```bash
+   docker-compose up
+   ```
 
-Option 1: Use the run script:
-```bash
-python run.py
-```
+4. Access the application at http://localhost:3000
 
-Option 2: Use uvicorn directly:
-```bash
-uvicorn backend.app.main:app --reload
-```
+### Manual Installation
 
-The API will be available at http://localhost:8000
+For detailed installation instructions, see the [Installation Guide](docs/installation.md).
 
-- API Documentation: http://localhost:8000/api/docs
-- ReDoc: http://localhost:8000/api/redoc
+## Documentation
 
-## API Features
+For detailed documentation, see the [Documentation](docs/README.md) directory, which includes:
 
-- **Profile Management**: Create and manage AI agent profiles with custom prompts
-- **Document Management**: Upload and process documents for context
-- **OpenRouter Integration**: Connect to various AI models via OpenRouter
-- **API Key Management**: Store and manage OpenRouter API keys
+- [Installation Guide](docs/installation.md)
+- [Profile Management](docs/profile-management.md)
+- [Document Processing](docs/document-processing.md)
+- [API Reference](docs/api-reference.md)
+- [API Keys Management](docs/api-keys.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
-## Development Notes
+## Architecture
 
-- Check the backend README for more details about the API
-- When running in production, make sure to set proper environment variables
+AI Profiles consists of two main components:
+
+1. **Backend (FastAPI)**
+   - API endpoints
+   - Document processing pipeline
+   - Database interactions
+   - OpenRouter API integration
+
+2. **Frontend (React)**
+   - User interface
+   - Profile management
+   - Document upload and viewing
+   - Chat interface
+
+## Requirements
+
+- Python 3.9+
+- Node.js 16+
+- PostgreSQL 13+
+- OpenRouter API key
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any issues or have questions, please check the [Troubleshooting Guide](docs/troubleshooting.md) or open an issue on GitHub.

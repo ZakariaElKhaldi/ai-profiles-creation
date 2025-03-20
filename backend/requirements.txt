@@ -39,3 +39,26 @@ httpx==0.24.1
 # Additional libraries
 openpyxl==3.1.2  # Added for document processing
 docx2txt==0.8    # Added for text extraction from DOCX files
+
+# Database driver for PostgreSQL
+psycopg2-binary==2.9.5  # or asyncpg for async support
+
+# Rate limiting
+fastapi-limiter==0.1.5
+redis==4.5.1
+
+# CORS handling
+fastapi-cors==0.0.6
+
+# Enhanced PDF processing
+pdfminer.six==20221105
+
+# OCR capabilities (optional)
+pytesseract==0.3.10
+pillow==9.4.0
+
+# Enhanced security
+argon2-cffi==21.3.0
+
+# Configuration management
+pydantic-settings==2.0.3  # Compatible with pydantic v1 and helps with future v2 migration
