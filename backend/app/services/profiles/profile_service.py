@@ -14,7 +14,10 @@ from app.models.profiles import (
     ProfileStatus,
     ProfileList,
     ProfileStats,
-    ProfileWithStats
+    ProfileWithStats,
+    APIKeyList,
+    APIKey,
+    APIKeyCreate
 )
 from app.core.config import settings
 
@@ -253,54 +256,169 @@ class ProfileService:
         )
     
     def update_profile_stats(
-        self,
-        profile_id: str,
-        tokens_used: Optional[int] = None,
-        query_time: Optional[float] = None,
-        add_query: bool = True
-    ) -> Optional[ProfileStats]:
-        """Update a profile's usage statistics"""
-        profile = self.get_profile(profile_id)
-        
+        self, 
+        profile_id: str, 
+        add_query: bool = False,
+        add_tokens: int = 0,
+        response_time: Optional[float] = None
+    ) -> Optional[ProfileWithStats]:
+        """Update profile usage statistics"""
+        profile = self.get_profile_with_stats(profile_id)
         if not profile:
             return None
         
-        profile_stats = self._read_profile_stats()
-        
-        if profile_id not in profile_stats:
-            profile_stats[profile_id] = ProfileStats().dict()
-        
-        stats = profile_stats[profile_id]
+        # Create new stats object
+        stats = profile.stats
         
         # Update stats
         if add_query:
-            stats["total_queries"] = stats.get("total_queries", 0) + 1
+            profile.query_count += 1
+            stats.total_queries += 1
+            stats.last_used = datetime.now()
         
-        if tokens_used:
-            stats["total_tokens"] = stats.get("total_tokens", 0) + tokens_used
+        if add_tokens > 0:
+            stats.total_tokens += add_tokens
         
-        if query_time:
-            current_avg = stats.get("average_response_time", 0.0)
-            current_count = stats.get("total_queries", 0)
+        if response_time is not None:
+            # Update average response time
+            current_avg = stats.average_response_time
+            current_queries = stats.total_queries
             
-            # Calculate new average
-            if current_count > 0:
-                stats["average_response_time"] = (
-                    (current_avg * (current_count - 1) + query_time) / current_count
-                    if add_query else
-                    (current_avg * (current_count - 1) + query_time) / (current_count)
-                )
+            if current_queries > 1:
+                # Weighted average
+                stats.average_response_time = ((current_avg * (current_queries - 1)) + response_time) / current_queries
             else:
-                stats["average_response_time"] = query_time
+                stats.average_response_time = response_time
         
-        # Update last used timestamp as isoformat string
-        stats["last_used"] = datetime.now().isoformat()
+        # Update document count
+        stats.documents_count = len(profile.document_ids)
         
-        # Save stats
-        profile_stats[profile_id] = stats
-        self._write_profile_stats(profile_stats)
+        # Save updated profile
+        return self._update_profile_with_stats(profile)
+    
+    def get_api_keys(self, profile_id: Optional[str] = None) -> APIKeyList:
+        """Get a list of API keys, optionally filtered by profile"""
+        api_keys = self._read_api_keys()
         
-        return ProfileStats(**stats)
+        # Filter by profile if requested
+        if profile_id:
+            api_keys = [k for k in api_keys if k.get("profile_id") == profile_id]
+        
+        # Return list
+        return APIKeyList(
+            total=len(api_keys),
+            keys=[APIKey(**k) for k in api_keys]
+        )
+    
+    def get_api_key(self, key_id: str) -> Optional[APIKey]:
+        """Get an API key by ID"""
+        api_keys = self._read_api_keys()
+        for key in api_keys:
+            if key.get("id") == key_id:
+                return APIKey(**key)
+        return None
+    
+    def get_api_key_by_value(self, key_value: str) -> Optional[APIKey]:
+        """Get an API key by its value"""
+        api_keys = self._read_api_keys()
+        for key in api_keys:
+            if key.get("key") == key_value:
+                return APIKey(**key)
+        return None
+    
+    def create_api_key(self, api_key_create: APIKeyCreate) -> APIKey:
+        """Create a new API key for a profile"""
+        # Validate profile exists
+        profile = self.get_profile(api_key_create.profile_id)
+        if not profile:
+            raise ValueError(f"Profile with ID {api_key_create.profile_id} not found")
+        
+        # Create API key
+        api_key = APIKey(
+            name=api_key_create.name,
+            description=api_key_create.description,
+            profile_id=api_key_create.profile_id,
+        )
+        
+        # Add to database
+        api_keys = self._read_api_keys()
+        api_keys.append(api_key.model_dump())
+        self._write_api_keys(api_keys)
+        
+        return api_key
+    
+    def delete_api_key(self, key_id: str) -> bool:
+        """Delete an API key"""
+        api_keys = self._read_api_keys()
+        initial_count = len(api_keys)
+        
+        api_keys = [k for k in api_keys if k.get("id") != key_id]
+        
+        if len(api_keys) < initial_count:
+            self._write_api_keys(api_keys)
+            return True
+        
+        return False
+    
+    def update_api_key_usage(self, key_id: str) -> Optional[APIKey]:
+        """Update API key usage statistics"""
+        api_keys = self._read_api_keys()
+        
+        for i, key in enumerate(api_keys):
+            if key.get("id") == key_id:
+                # Update usage stats
+                key["usage_count"] = key.get("usage_count", 0) + 1
+                key["last_used"] = datetime.now().isoformat()
+                
+                # Update database
+                api_keys[i] = key
+                self._write_api_keys(api_keys)
+                
+                return APIKey(**key)
+        
+        return None
+    
+    def verify_api_key(self, key_value: str) -> Optional[str]:
+        """Verify an API key and return the associated profile ID if valid"""
+        api_key = self.get_api_key_by_value(key_value)
+        
+        if not api_key:
+            return None
+        
+        # Update usage statistics
+        self.update_api_key_usage(api_key.id)
+        
+        # Return the profile ID
+        return api_key.profile_id
+    
+    def _read_api_keys(self) -> List[Dict]:
+        """Read API keys from storage"""
+        api_keys_path = self.profiles_dir / "api_keys.json"
+        
+        # Create file if it doesn't exist
+        if not api_keys_path.exists():
+            with open(api_keys_path, "w") as f:
+                json.dump({"keys": []}, f)
+        
+        # Read keys
+        try:
+            with open(api_keys_path, "r") as f:
+                data = json.load(f)
+                return data.get("keys", [])
+        except (FileNotFoundError, json.JSONDecodeError):
+            logger.error(f"Error reading API keys file {api_keys_path}")
+            return []
+    
+    def _write_api_keys(self, keys: List[Dict]):
+        """Write API keys to storage"""
+        api_keys_path = self.profiles_dir / "api_keys.json"
+        
+        try:
+            with open(api_keys_path, "w") as f:
+                json.dump({"keys": keys}, f, indent=2, cls=DateTimeEncoder)
+        except Exception as e:
+            logger.error(f"Error writing API keys file: {str(e)}")
+            raise
 
 
 # Create a global profile service instance

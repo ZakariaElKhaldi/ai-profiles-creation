@@ -51,14 +51,46 @@ export interface ProfileList {
   profiles: Profile[];
 }
 
+export interface APIKey {
+  id: string;
+  name: string;
+  description?: string;
+  key: string;
+  profile_id: string;
+  created_at: string;
+  last_used?: string;
+  usage_count: number;
+}
+
+export interface APIKeyCreate {
+  name: string;
+  description?: string;
+  profile_id: string;
+}
+
+export interface APIKeyList {
+  total: number;
+  keys: APIKey[];
+}
+
+export interface TrainingData {
+  input: string;
+  output: string;
+}
+
 class ProfileService {
   async listProfiles(): Promise<ProfileList> {
     const response = await api.get('/profiles');
     return response.data;
   }
 
-  async getProfile(id: string): Promise<ProfileWithStats> {
+  async getProfile(id: string): Promise<Profile> {
     const response = await api.get(`/profiles/${id}`);
+    return response.data;
+  }
+
+  async getProfileWithStats(id: string): Promise<ProfileWithStats> {
+    const response = await api.get(`/profiles/${id}/stats`);
     return response.data;
   }
 
@@ -68,7 +100,7 @@ class ProfileService {
   }
 
   async updateProfile(id: string, data: ProfileUpdate): Promise<Profile> {
-    const response = await api.patch(`/profiles/${id}`, data);
+    const response = await api.put(`/profiles/${id}`, data);
     return response.data;
   }
 
@@ -76,8 +108,45 @@ class ProfileService {
     await api.delete(`/profiles/${id}`);
   }
 
-  async getProfileStats(id: string): Promise<ProfileStats> {
-    const response = await api.get(`/profiles/${id}/stats`);
+  async activateProfile(id: string): Promise<void> {
+    await api.post(`/profiles/${id}/activate`);
+  }
+
+  async archiveProfile(id: string): Promise<void> {
+    await api.post(`/profiles/${id}/archive`);
+  }
+
+  // API Key methods
+  async getAPIKeys(profileId: string): Promise<APIKeyList> {
+    const response = await api.get(`/profiles/${profileId}/keys`);
+    return response.data;
+  }
+
+  async createAPIKey(profileId: string, data: APIKeyCreate): Promise<APIKey> {
+    const response = await api.post(`/profiles/${profileId}/keys`, data);
+    return response.data;
+  }
+
+  async deleteAPIKey(profileId: string, keyId: string): Promise<void> {
+    await api.delete(`/profiles/${profileId}/keys/${keyId}`);
+  }
+
+  async verifyAPIKey(key: string): Promise<{ profile_id: string }> {
+    const response = await api.post('/profiles/verify-key', { api_key: key });
+    return response.data;
+  }
+
+  // Training methods
+  async trainProfile(profileId: string, trainingData: TrainingData[]): Promise<void> {
+    await api.post(`/profiles/${profileId}/train`, trainingData);
+  }
+
+  // External query
+  async queryProfileExternal(query: string, apiKey: string, context?: string): Promise<any> {
+    const response = await api.post('/profiles/external/query', 
+      { query, context }, 
+      { headers: { 'api-key': apiKey } }
+    );
     return response.data;
   }
 }

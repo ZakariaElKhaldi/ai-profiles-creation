@@ -13,6 +13,48 @@
       "updated_at": "2025-03-19T17:52:32.098375",
       "status": "draft",
       "document_ids": []
+    },
+    {
+      "name": "bot3",
+      "description": "bot",
+      "system_prompt": "",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.7,
+      "max_tokens": 4000,
+      "id": "7878ba36-88f7-4315-9fb8-7d0cb3ada866",
+      "user_id": null,
+      "created_at": "2025-03-19T23:27:08.838551",
+      "updated_at": "2025-03-19T23:27:08.838551",
+      "status": "draft",
+      "document_ids": []
+    },
+    {
+      "name": "bot1",
+      "description": "bot",
+      "system_prompt": "\n\nAdditional training context:\nWhen asked about hi, respond with information similar to: hi sir\n",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.7,
+      "max_tokens": 16000,
+      "id": "65e31e82-c56f-46d4-a1dc-09144954f3a7",
+      "user_id": null,
+      "created_at": "2025-03-20T00:18:32.327100",
+      "updated_at": "2025-03-20T00:19:11.477973",
+      "status": "draft",
+      "document_ids": []
+    },
+    {
+      "name": "bo1",
+      "description": "bot1",
+      "system_prompt": "\n\nAdditional training context:\nWhen asked about hi, respond with information similar to: hi sir\n",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.7,
+      "max_tokens": 4000,
+      "id": "6925fbe1-be37-4aee-aca7-52f385e2c81d",
+      "user_id": null,
+      "created_at": "2025-03-20T00:21:32.292028",
+      "updated_at": "2025-03-20T00:22:11.333039",
+      "status": "draft",
+      "document_ids": []
     }
   ]
 }

@@ -6,6 +6,27 @@
       "average_response_time": 0.0,
       "documents_count": 0,
       "last_used": null
+    },
+    "7878ba36-88f7-4315-9fb8-7d0cb3ada866": {
+      "total_queries": 0,
+      "total_tokens": 0,
+      "average_response_time": 0.0,
+      "documents_count": 0,
+      "last_used": null
+    },
+    "65e31e82-c56f-46d4-a1dc-09144954f3a7": {
+      "total_queries": 0,
+      "total_tokens": 0,
+      "average_response_time": 0.0,
+      "documents_count": 0,
+      "last_used": null
+    },
+    "6925fbe1-be37-4aee-aca7-52f385e2c81d": {
+      "total_queries": 0,
+      "total_tokens": 0,
+      "average_response_time": 0.0,
+      "documents_count": 0,
+      "last_used": null
     }
   }
 }

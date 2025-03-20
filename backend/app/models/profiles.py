@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 import uuid
+import secrets
 
 # Base ConfigDict for all models to handle datetime serialization
 base_config = ConfigDict(
@@ -102,4 +103,39 @@ class ProfileWithStats(Profile):
     """Profile model with usage statistics"""
     model_config = base_config
     
-    stats: ProfileStats = Field(default_factory=ProfileStats) 
+    stats: ProfileStats = Field(default_factory=ProfileStats)
+
+
+class APIKeyBase(BaseModel):
+    """Base API key model with common fields"""
+    model_config = base_config
+    
+    name: str
+    description: Optional[str] = Field(default=None)
+
+
+class APIKeyCreate(APIKeyBase):
+    """Model for API key creation requests"""
+    model_config = base_config
+    
+    profile_id: str
+
+
+class APIKey(APIKeyBase):
+    """Full API key model for API responses"""
+    model_config = base_config
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    key: str = Field(default_factory=lambda: f"pk_{secrets.token_urlsafe(32)}")
+    profile_id: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    last_used: Optional[datetime] = Field(default=None)
+    usage_count: int = Field(default=0)
+
+
+class APIKeyList(BaseModel):
+    """Model for a list of API keys"""
+    model_config = base_config
+    
+    total: int
+    keys: List[APIKey] 

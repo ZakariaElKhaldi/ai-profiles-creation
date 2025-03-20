@@ -31,6 +31,9 @@ import DocumentDetails from './components/Documents/DocumentDetails';
 // Key Components
 import KeyGenerator from './components/Keys/KeyGenerator';
 
+// Training Components
+import ProfileTraining from './components/Training/ProfileTraining';
+
 // Settings Components
 import SettingsPage from './components/Settings/SettingsComponent';
 
@@ -58,32 +61,106 @@ const ProfileRoute = () => {
     },
   });
 
+  const [activeTab, setActiveTab] = useState<string>('uploads');
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'uploads':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <FileUploader 
+              profileId={id!} 
+              onUploadComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ['documents', id] });
+              }} 
+            />
+            <ProcessingStatus 
+              profileId={id!}
+              documentId="doc123"
+              stage="parsing"
+              progress={70}
+            />
+          </div>
+        );
+      case 'keys':
+        return (
+          <KeyGenerator 
+            profileId={id!} 
+            onKeyGenerated={() => {
+              queryClient.invalidateQueries({ queryKey: ['profile', id] });
+            }} 
+          />
+        );
+      case 'training':
+        return (
+          <ProfileTraining profileId={id!} />
+        );
+      default:
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <FileUploader 
+              profileId={id!} 
+              onUploadComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ['documents', id] });
+              }} 
+            />
+            <ProcessingStatus 
+              profileId={id!}
+              documentId="doc123"
+              stage="parsing"
+              progress={70}
+            />
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-gray-100">
         {profile ? profile.name : 'Profile Management'}
       </h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FileUploader 
-          profileId={id!} 
-          onUploadComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ['documents', id] });
-          }} 
-        />
-        <ProcessingStatus 
-          profileId={id!}
-          documentId="doc123"
-          stage="parsing"
-          progress={70}
-        />
+      
+      {/* Tabs Navigation */}
+      <div className="border-b border-gray-700">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('uploads')}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'uploads'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            Document Uploads
+          </button>
+          <button
+            onClick={() => setActiveTab('keys')}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'keys'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            API Keys
+          </button>
+          <button
+            onClick={() => setActiveTab('training')}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'training'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            Training
+          </button>
+        </nav>
       </div>
-      <KeyGenerator 
-        profileId={id!} 
-        hasExistingKey={false} 
-        onKeyGenerated={() => {
-          queryClient.invalidateQueries({ queryKey: ['profile', id] });
-        }} 
-      />
+      
+      {/* Tab Content */}
+      <div className="mt-6">
+        {renderTabContent()}
+      </div>
     </div>
   );
 };

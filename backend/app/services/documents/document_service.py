@@ -20,11 +20,19 @@ from app.models.documents import (
 )
 from app.core.config import settings
 
+# Import document parsing libraries
+import PyPDF2 as pypdf2
+import docx2txt
+import pandas as pd
+import csv
+import openpyxl
+
 logger = logging.getLogger(__name__)
 
 # Define the path for storing document data
 DOCUMENTS_DIR = Path("backend/data/documents")
 DOCUMENTS_DB = DOCUMENTS_DIR / "documents.json"
+PROCESSED_DIR = DOCUMENTS_DIR / "processed"
 
 
 def model_to_dict(model):
@@ -147,7 +155,115 @@ class DocumentService:
         documents.append(document.dict())
         self._write_documents(documents)
         
+        # Process the document asynchronously (in a real app, this would be a background task)
+        # For simplicity, we'll do it directly here
+        try:
+            await self.process_document(document_id)
+        except Exception as e:
+            logger.error(f"Error processing document: {str(e)}")
+            # Mark as failed but still return the document
+            self.update_document_status(document_id, DocumentStatus.FAILED, str(e))
+        
         return Document(**document.dict())
+    
+    async def process_document(self, document_id: str) -> Optional[Document]:
+        """Process a document to extract text and metadata for AI understanding"""
+        document = self.get_document(document_id)
+        if not document:
+            logger.error(f"Document {document_id} not found for processing")
+            return None
+            
+        # Update status to processing
+        self.update_document_status(document_id, DocumentStatus.PROCESSING)
+        
+        try:
+            file_path = Path(document.file_path)
+            processed_dir = PROCESSED_DIR / document_id
+            processed_dir.mkdir(parents=True, exist_ok=True)
+            processed_text_path = processed_dir / "extracted_text.txt"
+            processed_metadata_path = processed_dir / "metadata.json"
+            
+            # Extract text based on document type
+            extracted_text = ""
+            metadata = DocumentMetadata()
+            
+            if document.document_type == DocumentType.PDF:
+                # Process PDF
+                with open(file_path, 'rb') as f:
+                    reader = pypdf2.PdfReader(f)
+                    metadata.page_count = len(reader.pages)
+                    
+                    # Extract text from all pages
+                    text_parts = []
+                    for page_num in range(len(reader.pages)):
+                        page = reader.pages[page_num]
+                        text_parts.append(page.extract_text())
+                    
+                    extracted_text = "\n\n".join(text_parts)
+                    
+                    # Extract additional metadata if available
+                    if reader.metadata:
+                        metadata.author = reader.metadata.author
+                        if reader.metadata.creation_date:
+                            metadata.created_date = reader.metadata.creation_date
+                        if reader.metadata.modification_date:
+                            metadata.modified_date = reader.metadata.modification_date
+                    
+                    # Count words
+                    metadata.word_count = len(extracted_text.split())
+                    metadata.size_bytes = file_path.stat().st_size
+            
+            elif document.document_type == DocumentType.DOCX:
+                # Process DOCX
+                extracted_text = docx2txt.process(file_path)
+                metadata.word_count = len(extracted_text.split())
+                metadata.size_bytes = file_path.stat().st_size
+            
+            elif document.document_type == DocumentType.TXT:
+                # Process TXT
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    extracted_text = f.read()
+                metadata.word_count = len(extracted_text.split())
+                metadata.size_bytes = file_path.stat().st_size
+            
+            elif document.document_type == DocumentType.CSV:
+                # Process CSV
+                df = pd.read_csv(file_path)
+                # Convert dataframe to text
+                extracted_text = df.to_string()
+                metadata.size_bytes = file_path.stat().st_size
+                # Add CSV specific metadata
+                metadata.page_count = 1
+                metadata.word_count = len(extracted_text.split())
+            
+            elif document.document_type == DocumentType.XLSX:
+                # Process XLSX
+                df = pd.read_excel(file_path, sheet_name=None)
+                texts = []
+                for sheet_name, sheet_df in df.items():
+                    texts.append(f"Sheet: {sheet_name}\n{sheet_df.to_string()}")
+                extracted_text = "\n\n".join(texts)
+                metadata.size_bytes = file_path.stat().st_size
+                metadata.page_count = len(df)
+                metadata.word_count = len(extracted_text.split())
+            
+            # Save extracted text to file
+            with open(processed_text_path, 'w', encoding='utf-8') as f:
+                f.write(extracted_text)
+            
+            # Update document with metadata
+            updated_doc = self.update_document_metadata(document_id, metadata)
+            if updated_doc:
+                # Mark document as completed
+                return self.update_document_status(document_id, DocumentStatus.COMPLETED)
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error processing document {document_id}: {str(e)}")
+            # Mark document as failed
+            self.update_document_status(document_id, DocumentStatus.FAILED, str(e))
+            return None
     
     def update_document(self, document_id: str, document_update: DocumentUpdate) -> Optional[Document]:
         """Update document information"""
