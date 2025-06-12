@@ -3,14 +3,14 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { openRouterService } from '../../services/api';
 import ApiKeySettings from './ApiKeySettings';
 import Toast from '../Common/Toast';
-import type { APIKey, ActiveKeyInfo } from '../../services/api/openrouter';
+import type { OpenRouterAPIKey, ActiveKeyInfo } from '../../services/api/openrouter';
 import axios from 'axios';
 
 const SettingsPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [isTesting, setIsTesting] = useState<boolean>(false);
-  const [savedKeys, setSavedKeys] = useState<APIKey[]>([]);
+  const [savedKeys, setSavedKeys] = useState<OpenRouterAPIKey[]>([]);
   const [activeKeyInfo, setActiveKeyInfo] = useState<ActiveKeyInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showKeyDetails, setShowKeyDetails] = useState<Record<string, boolean>>({});

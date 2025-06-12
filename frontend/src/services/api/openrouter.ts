@@ -51,13 +51,13 @@ export interface ModelsResponse {
   data: AvailableModel[];
 }
 
-export interface APIKey {
+export interface OpenRouterAPIKey {
   key: string;
   created_at: string;
 }
 
 export interface APIKeyListResponse {
-  keys: APIKey[];
+  keys: OpenRouterAPIKey[];
 }
 
 export interface ActiveKeyInfo {
@@ -132,7 +132,7 @@ class OpenRouterService {
     }
   }
 
-  async addKey(key: string): Promise<APIKey> {
+  async addKey(key: string): Promise<OpenRouterAPIKey> {
     try {
       const response = await api.post('/openrouter/keys', { key });
       return response.data;
